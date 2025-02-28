@@ -2,16 +2,9 @@ package models
 
 import (
 	"strings"
-	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-)
-
-// Define role
-const (
-	RoleConsultant = "consultant"
-	RoleCustomer   = "customer"
 )
 
 // User model for GORM
@@ -26,32 +19,12 @@ type User struct {
 	Avatar   string  `gorm:"type:text;null"`
 	Bio      string  `gorm:"type:text"`
 	Status   string  `gorm:"size:20"`
-}
-type Role struct {
-	ID   uint   `gorm:"primaryKey"`
-	Name string `gorm:"size:50;unique; not null"`
-	User []User `gorm:"foreignKey:RoleID;constraint:OnDelete:CASCADE;"`
-}
-type Profile struct {
-	ID           uint    `gorm:"primaryKey"`
-	UserID       uint    `gorm:"uniqueIndex;not null"`
-	Profession   string  `gorm:"size:255;not null"`
-	Experience   int     `gorm:"not null"`
-	Rating       float32 `gorm:"type:float"`
-	TotalReviews int
 
-	User User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
-}
+	Followers []Follow `gorm:"foreignKey:FollowingID"`
+	Following []Follow `gorm:"foreignKey:FollowerID"`
 
-type Certification struct {
-	ID         uint   `gorm:"primaryKey"`
-	UserID     uint   `gorm:"not null;index"`
-	Name       string `gorm:"size:255;not null"`
-	ImageURL   string `gorm:"type:text"`
-	IssuedBy   string `gorm:"size:255"`
-	IssuedDate time.Time
-
-	User User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
+	Post    []Post    `gorm:"foreignKey;UserID;constraint:OnDelete:CASCADE"`
+	Comment []Comment `gorm:"foreignKey;UserID;constraint:OnDelete:CASCADE"`
 }
 
 // Hash user password with bcrypt

@@ -14,5 +14,4 @@ type Handler interface {
 	GetUsers() gin.HandlerFunc
 	GetMe() gin.HandlerFunc
 	UploadAvatar() gin.HandlerFunc
-	GetCSRFToken() gin.HandlerFunc
 }

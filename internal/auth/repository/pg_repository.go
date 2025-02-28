@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	auth "health_backend/internal/auth/interfaces"
 	"health_backend/internal/models"
-
 	"health_backend/pkg/utils"
 
 	"github.com/pkg/errors"
@@ -61,21 +60,25 @@ func (r *authRepo) FindByEmail(ctx context.Context, user *models.User) (*models.
 
 // TODO: FindByName implements auth.Repository.
 func (r *authRepo) FindByName(ctx context.Context, name string, query *utils.PaginationQuery) (*models.UsersList, error) {
-	panic("unimplemented")
+	return nil, errors.Errorf("Not implement")
+
 }
 
 // TODO : GetByID implements auth.Repository.
 func (r *authRepo) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
-	panic("unimplemented")
+	return nil, errors.Errorf("Not implement")
+
 }
 
 // TODO: GetUsers implements auth.Repository.
 func (r *authRepo) GetUsers(ctx context.Context, pq *utils.PaginationQuery) (*models.UsersList, error) {
-	panic("unimplemented")
+	return nil, errors.Errorf("Not implement")
+
 }
 
 // Register implements auth.Repository.
 func (r *authRepo) Register(ctx context.Context, user *models.User) (*models.User, error) {
+
 	span, ctx := opentracing.StartSpanFromContext(ctx, "authRepo.Register")
 	defer span.Finish()
 
@@ -89,6 +92,5 @@ func (r *authRepo) Register(ctx context.Context, user *models.User) (*models.Use
 // Update implements auth.Repository.
 func (r *authRepo) Update(ctx context.Context, user *models.User) (*models.User, error) {
 
-	panic("unimplemented")
-
+	return nil, errors.Errorf("Not implement")
 }

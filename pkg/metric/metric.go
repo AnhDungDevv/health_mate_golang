@@ -3,6 +3,7 @@ package metric
 import (
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,51 +22,55 @@ type PrometheusMetrics struct {
 
 func CreateMetrics(address string, name string) (Metrics, error) {
 
-	var metr PrometheusMetrics
+	metr := &PrometheusMetrics{}
 
 	metr.HitsTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: name + "_hits-total",
+		Name: name + "_hits_total",
+		Help: "Total number of hits",
 	})
 
-	if err := prometheus.Register(metr.HitsTotal); err != nil {
-		return nil, err
-	}
 	metr.Hits = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: name + "_hits",
-		},
-		[]string{
-			"status",
-			"method",
-			"path"},
-	)
-	if err := prometheus.Register(metr.Hits); err != nil {
-		return nil, err
-	}
-	metr.Times = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name: name + "_times",
+			Help: "Total number of hits",
 		},
 		[]string{"status", "method", "path"},
 	)
-	if err := prometheus.Register(metr.Times); err != nil {
-		return nil, err
+	metr.Times = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    name + "_response_time",
+			Help:    "Response time histogram",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"status", "method", "path"},
+	)
+
+	// Đăng ký metrics với Prometheus
+	for _, metric := range []prometheus.Collector{metr.HitsTotal, metr.Hits, metr.Times} {
+		if err := prometheus.Register(metric); err != nil {
+			if _, ok := err.(prometheus.AlreadyRegisteredError); !ok {
+				return nil, err
+			}
+		}
 	}
-	if err := prometheus.Register(prometheus.NewBuildInfoCollector()); err != nil {
-		return nil, err
-	}
+
 	go func() {
 		router := gin.Default()
+		router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
-		router.GET("/metric", gin.WrapH(promhttp.Handler()))
+		// Lấy cổng từ address
+		port := "unknown"
+		if idx := strings.LastIndex(address, ":"); idx != -1 {
+			port = address[idx+1:]
+		}
 
-		log.Printf("Metrics server is running on port: %s", address)
+		log.Printf("Metrics server is running on port: %s", port)
 		if err := router.Run(address); err != nil {
-			log.Fatal(err)
+			log.Fatalf("Failed to start metrics server: %v", err)
 		}
 	}()
 
-	return &metr, nil
+	return metr, nil
 }
 
 func (metr *PrometheusMetrics) IncHits(status int, method, path string) {

@@ -18,42 +18,58 @@ type authHandlers struct {
 
 // Delete implements auth.Handler.
 func (a *authHandlers) Delete() gin.HandlerFunc {
-	panic("unimplemented")
+	return func(c *gin.Context) {
+		c.JSON(501, gin.H{"error": "Function not implement"})
+	}
 }
 
 // FindByName implements auth.Handler.
 func (a *authHandlers) FindByName() gin.HandlerFunc {
-	panic("unimplemented")
+	return func(c *gin.Context) {
+		c.JSON(501, gin.H{"error": "Function not implement"})
+	}
 }
 
 // GetCSRFToken implements auth.Handler.
 func (a *authHandlers) GetCSRFToken() gin.HandlerFunc {
-	panic("unimplemented")
+	return func(c *gin.Context) {
+		c.JSON(501, gin.H{"error": "Function not implement"})
+	}
 }
 
 // GetMe implements auth.Handler.
 func (a *authHandlers) GetMe() gin.HandlerFunc {
-	panic("unimplemented")
+	return func(c *gin.Context) {
+		c.JSON(501, gin.H{"error": "Function not implement"})
+	}
 }
 
 // GetUserByID implements auth.Handler.
 func (a *authHandlers) GetUserByID() gin.HandlerFunc {
-	panic("unimplemented")
+	return func(c *gin.Context) {
+		c.JSON(501, gin.H{"error": "Function not implement"})
+	}
 }
 
 // GetUsers implements auth.Handler.
 func (a *authHandlers) GetUsers() gin.HandlerFunc {
-	panic("unimplemented")
+	return func(c *gin.Context) {
+		c.JSON(501, gin.H{"error": "Function not implement"})
+	}
 }
 
 // Login implements auth.Handler.
 func (a *authHandlers) Login() gin.HandlerFunc {
-	panic("unimplemented")
+	return func(c *gin.Context) {
+		c.JSON(501, gin.H{"error": "Function not implement"})
+	}
 }
 
 // Logout implements auth.Handler.
 func (a *authHandlers) Logout() gin.HandlerFunc {
-	panic("unimplemented")
+	return func(c *gin.Context) {
+		c.JSON(501, gin.H{"error": "Function not implement"})
+	}
 }
 
 // Register implements auth.Handler.

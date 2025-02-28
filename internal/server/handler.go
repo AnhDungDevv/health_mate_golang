@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"health_backend/docs"
 	"health_backend/pkg/metric"
 	"net/http"
@@ -18,6 +19,7 @@ import (
 
 func (s *Server) MapHandlers(g *gin.Engine) error {
 	metric, err := metric.CreateMetrics(s.cfg.Metrics.URL, s.cfg.Metrics.ServiceName)
+	fmt.Println(metric)
 
 	if err != nil {
 		s.logger.Errorf("CreateMetric Error : %s", err)

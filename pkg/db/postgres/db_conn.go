@@ -19,7 +19,7 @@ const (
 	connMaxIdleTime = 20
 )
 
-// NewPsqlDB - Kết nối PostgreSQL bằng GORM
+// NewPsqlDB - Connect PostgreSQL by GORM
 func NewPsqlDB(p *config.Config) (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s dbname=%s sslmode=disable password=%s",
@@ -31,13 +31,13 @@ func NewPsqlDB(p *config.Config) (*gorm.DB, error) {
 	)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info), // Hiển thị log SQL khi chạy
+		Logger: logger.Default.LogMode(logger.Info), //  log SQL
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	// Lấy instance SQL để cấu hình connection pool
+	// Get instance SQL to config for connection pool
 	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func NewPsqlDB(p *config.Config) (*gorm.DB, error) {
 	sqlDB.SetMaxIdleConns(maxIdleConns)
 	sqlDB.SetConnMaxIdleTime(time.Duration(connMaxIdleTime) * time.Second)
 
-	// Kiểm tra kết nối
+	// Check the connection
 	if err = sqlDB.Ping(); err != nil {
 		return nil, err
 	}

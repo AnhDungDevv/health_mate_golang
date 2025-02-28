@@ -17,8 +17,6 @@ import (
 func main() {
 	log.Println("Starting API server...")
 
-	// Load Configuration
-	// configPath := utils.GetConfigPath(os.Getenv("CONFIG")) // Correct env var name
 	cfgFile, err := config.LoadConfig("config")
 	if err != nil {
 		log.Fatalf("LoadConfig error: %v", err)

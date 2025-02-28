@@ -19,6 +19,10 @@ logger:
   Encoding: json
   Level: info
 
+metrics:
+  Url: 0.0.0.0:7070
+  ServiceName: api
+
 postgres:
   PostgresqlHost: localhost
   PostgresqlPort: 5432

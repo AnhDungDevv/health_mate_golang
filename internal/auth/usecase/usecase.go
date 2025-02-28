@@ -6,10 +6,11 @@ import (
 	auth "health_backend/internal/auth/interfaces"
 	"health_backend/internal/models"
 	"health_backend/pkg/logger"
+	"health_backend/pkg/utils"
+
+	uuid "github.com/jackc/pgx/pgtype/ext/satori-uuid"
 
 	"github.com/opentracing/opentracing-go"
-	// "health_backend/pkg/utils"
-	// uuid "github.com/jackc/pgx/pgtype/ext/satori-uuid"
 )
 
 type authUC struct {
@@ -20,35 +21,34 @@ type authUC struct {
 }
 
 // Auth usecase contructor
-
 func NewAuthUseCase(cfg *config.Config, authRepo auth.Repository, redisRepo auth.RedisRepository, log logger.Logger) auth.UseCase {
 	return &authUC{cfg: cfg, authRepo: authRepo, redisRepo: redisRepo, logger: log}
 }
 
-// // Delete implements auth.UseCase.
-// func (a *authUC) Delete(ctx context.Context, userID uuid.UUID) error {
-// 	panic("unimplemented")
-// }
+// Delete implements auth.UseCase.
+func (a *authUC) Delete(ctx context.Context, userID uuid.UUID) error {
+	panic("unimplemented")
+}
 
-// // FindByName implements auth.UseCase.
-// func (a *authUC) FindByName(ctx context.Context, name string, query *utils.PaginationQuery) (*models.UsersList, error) {
-// 	panic("unimplemented")
-// }
+// FindByName implements auth.UseCase.
+func (a *authUC) FindByName(ctx context.Context, name string, query *utils.PaginationQuery) (*models.UsersList, error) {
+	panic("unimplemented")
+}
 
-// // GetByID implements auth.UseCase.
-// func (a *authUC) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
-// 	panic("unimplemented")
-// }
+// GetByID implements auth.UseCase.
+func (a *authUC) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
+	panic("unimplemented")
+}
 
-// // GetUsers implements auth.UseCase.
-// func (a *authUC) GetUsers(ctx context.Context, pq *utils.PaginationQuery) (*models.UsersList, error) {
-// 	panic("unimplemented")
-// }
+// GetUsers implements auth.UseCase.
+func (a *authUC) GetUsers(ctx context.Context, pq *utils.PaginationQuery) (*models.UsersList, error) {
+	panic("unimplemented")
+}
 
-// // Login implements auth.UseCase.
-// func (a *authUC) Login(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
-// 	panic("unimplemented")
-// }
+// Login implements auth.UseCase.
+func (a *authUC) Login(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
+	panic("unimplemented")
+}
 
 // // Register implements auth.UseCase.
 func (u *authUC) Register(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
@@ -68,7 +68,7 @@ func (u *authUC) Register(ctx context.Context, user *models.User) (*models.UserW
 
 }
 
-// // Update implements auth.UseCase.
-// func (a *authUC) Update(ctx context.Context, user *models.User) (*models.User, error) {
-// 	panic("unimplemented")
-// }
+// Update implements auth.UseCase.
+func (a *authUC) Update(ctx context.Context, user *models.User) (*models.User, error) {
+	panic("unimplemented")
+}

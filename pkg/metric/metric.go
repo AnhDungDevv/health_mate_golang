@@ -19,8 +19,6 @@ type PrometheusMetrics struct {
 	Times     *prometheus.HistogramVec
 }
 
-
-
 func CreateMetrics(address string, name string) (Metrics, error) {
 
 	var metr PrometheusMetrics
@@ -70,11 +68,11 @@ func CreateMetrics(address string, name string) (Metrics, error) {
 	return &metr, nil
 }
 
-func (metr *PrometheusMetrics) IncHits(status int, method, path string){
+func (metr *PrometheusMetrics) IncHits(status int, method, path string) {
 	metr.HitsTotal.Inc()
-	metr.Hits.WithLabelValues(strconv.Itoa(status), method,path).Inc()
+	metr.Hits.WithLabelValues(strconv.Itoa(status), method, path).Inc()
 }
 
-func (metr *PrometheusMetrics) ObserveResponseTime(status int, method, path string , observeTime float64 ){
-	metr.Times.WithLabelValues(strconv.Itoa(status), method, path).Observe(observeTime);
+func (metr *PrometheusMetrics) ObserveResponseTime(status int, method, path string, observeTime float64) {
+	metr.Times.WithLabelValues(strconv.Itoa(status), method, path).Observe(observeTime)
 }

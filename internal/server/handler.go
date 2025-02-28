@@ -1,20 +1,19 @@
 package server
 
 import (
+	"health_backend/docs"
+	"health_backend/pkg/metric"
 	"net/http"
 
-	// Import Swagger
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/gin-gonic/gin"
 
-	"health_backend/docs"
 	authHttp "health_backend/internal/auth/delivery/http"
 	authRepository "health_backend/internal/auth/repository"
 	authUseCase "health_backend/internal/auth/usecase"
-	"health_backend/pkg/metric"
+	apiMiddlewares "health_backend/internal/middleware"
 
-	"github.com/gin-gonic/gin"
-	// "github.com/swaggo/swag/example/override/docs"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func (s *Server) MapHandlers(g *gin.Engine) error {
@@ -24,11 +23,11 @@ func (s *Server) MapHandlers(g *gin.Engine) error {
 		s.logger.Errorf("CreateMetric Error : %s", err)
 
 	}
-	// s.logger.Info(
-	// 	"Metrics available URL: %s, ServiceName: %s",
-	// 	s.cfg.Metrics.URL,
-	// 	s.cfg.Metrics.ServiceName,
-	// )
+	s.logger.Info(
+		"Metrics available URL: %s, ServiceName: %s",
+		s.cfg.Metrics.URL,
+		s.cfg.Metrics.ServiceName,
+	)
 	// Init repositories
 	aRepo := authRepository.NewAuthRepository(s.db)
 	authRedisRepo := authRepository.NewAuthRedisRepo(s.redisClient)
@@ -39,6 +38,9 @@ func (s *Server) MapHandlers(g *gin.Engine) error {
 	// Init handlers
 	authHandlers := authHttp.NewAuthHendler(s.cfg, authUC, s.logger)
 
+	// Middelwares
+	mv := apiMiddlewares.NewMiddlewareManager(authUC, s.cfg, []string{"*"}, s.logger)
+	g.Use(mv.MetricsMiddleware(metric))
 	// // Swagger docs
 	docs.SwaggerInfo.Title = "Go example REST API"
 	g.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -53,12 +55,12 @@ func (s *Server) MapHandlers(g *gin.Engine) error {
 	}
 	// CORS Middleware
 	g.Use(func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "*") // Cho phép tất cả hoặc thay bằng domain cụ thể
+		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, X-Request-ID")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 
 		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(http.StatusNoContent) // Trả về 204 thay vì 200
+			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
 

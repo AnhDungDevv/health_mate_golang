@@ -4,30 +4,54 @@ import (
 	"strings"
 	"time"
 
-	uuid "github.com/jackc/pgx/pgtype/ext/satori-uuid"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
+)
+
+// Define role
+const (
+	RoleConsultant = "consultant"
+	RoleCustomer   = "customer"
 )
 
 // User model for GORM
 type User struct {
-	UserID      uuid.UUID  `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	FirstName   string     `gorm:"type:varchar(30);not null"`
-	LastName    string     `gorm:"type:varchar(30);not null"`
-	Email       string     `gorm:"type:varchar(60);uniqueIndex"`
-	Password    string     `gorm:"type:varchar(255);not null"`
-	Role        *string    `gorm:"type:varchar(10)"`
-	About       *string    `gorm:"type:varchar(1024)"`
-	Avatar      *string    `gorm:"type:varchar(512)"`
-	PhoneNumber *string    `gorm:"type:varchar(20)"`
-	Address     *string    `gorm:"type:varchar(250)"`
-	City        *string    `gorm:"type:varchar(24)"`
-	Country     *string    `gorm:"type:varchar(24)"`
-	Gender      *string    `gorm:"type:varchar(10)"`
-	Postcode    *int       `gorm:"type:int"`
-	Birthday    *time.Time `gorm:"type:date"`
-	CreatedAt   time.Time  `gorm:"type:timestamp;default:current_timestamp"`
-	UpdatedAt   time.Time  `gorm:"type:timestamp;default:current_timestamp on update current_timestamp"`
-	LoginDate   *time.Time `gorm:"type:timestamp"`
+	gorm.Model
+	RoleID   uint    `gorm:"index;not null"`
+	Role     Role    `gorm:"foreignKey:RoleID;constraint:OnDelete:CASCADE"`
+	Name     string  `gorm:"size:100;not null"`
+	Email    string  `gorm:"size:100;uniqueIndex;not null"`
+	Password string  `gorm:"not null"`
+	Phone    *string `gorm:"size:15"`
+	Avatar   string  `gorm:"type:text;null"`
+	Bio      string  `gorm:"type:text"`
+	Status   string  `gorm:"size:20"`
+}
+type Role struct {
+	ID   uint   `gorm:"primaryKey"`
+	Name string `gorm:"size:50;unique; not null"`
+	User []User `gorm:"foreignKey:RoleID;constraint:OnDelete:CASCADE;"`
+}
+type Profile struct {
+	ID           uint    `gorm:"primaryKey"`
+	UserID       uint    `gorm:"uniqueIndex;not null"`
+	Profession   string  `gorm:"size:255;not null"`
+	Experience   int     `gorm:"not null"`
+	Rating       float32 `gorm:"type:float"`
+	TotalReviews int
+
+	User User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
+}
+
+type Certification struct {
+	ID         uint   `gorm:"primaryKey"`
+	UserID     uint   `gorm:"not null;index"`
+	Name       string `gorm:"size:255;not null"`
+	ImageURL   string `gorm:"type:text"`
+	IssuedBy   string `gorm:"size:255"`
+	IssuedDate time.Time
+
+	User User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
 }
 
 // Hash user password with bcrypt
@@ -61,29 +85,22 @@ func (u *User) PrepareCreate() error {
 	if err := u.HashPassword(); err != nil {
 		return err
 	}
-	if u.PhoneNumber != nil {
-		*u.PhoneNumber = strings.TrimSpace(*u.PhoneNumber)
-
-	}
-	if u.Role != nil {
-		*u.Role = strings.ToLower(strings.TrimSpace(*u.Role))
-	}
-	if u.Role != nil {
-		*u.Role = strings.ToLower(strings.TrimSpace(*u.Role))
+	if u.Phone != nil {
+		*u.Phone = strings.TrimSpace(*u.Phone)
 	}
 	return nil
-
 }
 
-//Prepare for update
-
+// Prepare for update
 func (u *User) PrepareUpdate() error {
 	u.Email = strings.ToLower(strings.TrimSpace(u.Email))
-	if u.PhoneNumber != nil {
-		*u.PhoneNumber = strings.TrimSpace(*u.PhoneNumber)
+	if u.Phone != nil {
+		*u.Phone = strings.TrimSpace(*u.Phone)
 	}
-	if u.Role != nil {
-		*u.Role = strings.ToLower(strings.TrimSpace(*u.Role))
+	if u.Password != "" && !strings.HasPrefix(u.Password, "$2a$") {
+		if err := u.HashPassword(); err != nil {
+			return err
+		}
 	}
 	return nil
 }

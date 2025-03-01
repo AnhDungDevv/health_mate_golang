@@ -17,7 +17,6 @@ type User struct {
 	Password string  `gorm:"not null"`
 	Phone    *string `gorm:"size:15"`
 	Avatar   string  `gorm:"type:text;null"`
-	Bio      string  `gorm:"type:text"`
 	Status   string  `gorm:"size:20"`
 
 	Followers []Follow `gorm:"foreignKey:FollowingID"`

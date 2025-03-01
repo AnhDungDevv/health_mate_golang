@@ -26,6 +26,18 @@ func NewAuthRepository(db *gorm.DB) auth.Repository {
 	}
 }
 
+// Register implements auth.Repository.
+func (r *authRepo) Register(ctx context.Context, user *models.User) (*models.User, error) {
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "authRepo.Register")
+	defer span.Finish()
+
+	if err := r.db.WithContext(ctx).Create(user).Error; err != nil {
+		return nil, errors.Wrap(err, "authRepo.Register.Create")
+	}
+	return user, nil
+}
+
 // Delete implements auth.Repository.
 func (r *authRepo) Delete(ctx context.Context, userID uuid.UUID) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "authRepo.DeleteUser")
@@ -46,16 +58,11 @@ func (r *authRepo) FindByEmail(ctx context.Context, user *models.User) (*models.
 	span, ctx := opentracing.StartSpanFromContext(ctx, "authRepo.FinByEmail")
 	defer span.Finish()
 
-	result := r.db.WithContext(ctx).Where("email= ?", user.Email).First(&user)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, errors.Wrap(gorm.ErrRecordNotFound, "user not found")
-		}
-		return nil, errors.Wrap(result.Error, "authRepo.FindByEmail")
+	foundUser := &models.User{}
+	if err := r.db.WithContext(ctx).Where("email = ?", user.Email).First(foundUser).Error; err != nil {
+		return nil, errors.Wrap(err, "authRepo.FindByEmail")
 	}
-
-	return user, nil
-
+	return foundUser, nil
 }
 
 // TODO: FindByName implements auth.Repository.
@@ -74,19 +81,6 @@ func (r *authRepo) GetByID(ctx context.Context, userID uuid.UUID) (*models.User,
 func (r *authRepo) GetUsers(ctx context.Context, pq *utils.PaginationQuery) (*models.UsersList, error) {
 	return nil, errors.Errorf("Not implement")
 
-}
-
-// Register implements auth.Repository.
-func (r *authRepo) Register(ctx context.Context, user *models.User) (*models.User, error) {
-
-	span, ctx := opentracing.StartSpanFromContext(ctx, "authRepo.Register")
-	defer span.Finish()
-
-	if err := r.db.WithContext(ctx).Create(user).Error; err != nil {
-		return nil, errors.Wrap(err, "authRepo.Register.Create")
-	}
-
-	return user, nil
 }
 
 // Update implements auth.Repository.

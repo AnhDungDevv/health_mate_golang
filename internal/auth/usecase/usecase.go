@@ -5,10 +5,14 @@ import (
 	"health_backend/config"
 	auth "health_backend/internal/auth/interfaces"
 	"health_backend/internal/models"
+	httpErrors "health_backend/pkg/httpError"
 	"health_backend/pkg/logger"
 	"health_backend/pkg/utils"
+	"net/http"
 
+	"github.com/go-playground/validator"
 	uuid "github.com/jackc/pgx/pgtype/ext/satori-uuid"
+	"github.com/pkg/errors"
 
 	"github.com/opentracing/opentracing-go"
 )
@@ -23,6 +27,50 @@ type authUC struct {
 // Auth usecase contructor
 func NewAuthUseCase(cfg *config.Config, authRepo auth.Repository, redisRepo auth.RedisRepository, log logger.Logger) auth.UseCase {
 	return &authUC{cfg: cfg, authRepo: authRepo, redisRepo: redisRepo, logger: log}
+}
+
+// // Register implements auth.UseCase.
+func (u *authUC) Register(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "authUC.Register")
+	defer span.Finish()
+
+	existUser, _ := u.authRepo.FindByEmail(ctx, user)
+
+	if existUser != nil {
+		return nil, httpErrors.NewRestErrorWithMessage(http.StatusBadRequest, httpErrors.EmailAlreadyExistsError, nil)
+	}
+
+	validate := validator.New()
+	if err := validate.StructCtx(ctx, user); err != nil {
+		return nil, httpErrors.NewBadRequestError(errors.Wrap(err, "authUC.Register.ValidateUser"))
+	}
+
+	if user.Role == models.Consultant {
+		if len(user.Certifications) == 0 || user.Profile.Profession == "" {
+			return nil, httpErrors.NewRestErrorWithMessage(http.StatusBadRequest, httpErrors.CertificationAndProfileNotExistError, nil)
+		}
+	}
+
+	if err := user.PrepareCreate(); err != nil {
+		return nil, httpErrors.NewBadRequestError(errors.Wrap(err, "authUC.Register.PrepareCreate"))
+	}
+
+	createdUser, err := u.authRepo.Register(ctx, user)
+	if err != nil {
+		return nil, httpErrors.NewInternalServerError(errors.Wrap(err, "authUC.Register.Register"))
+	}
+	createdUser.SanitizePassword()
+
+	token, err := utils.GenerateJWTToken(user, u.cfg)
+	if err != nil {
+		return nil, httpErrors.NewInternalServerError(errors.Wrap(err, "authUC.Register.GenerateJWTToken"))
+	}
+
+	return &models.UserWithToken{
+		User:  createdUser,
+		Token: token,
+	}, nil
+
 }
 
 // Delete implements auth.UseCase.
@@ -48,24 +96,6 @@ func (a *authUC) GetUsers(ctx context.Context, pq *utils.PaginationQuery) (*mode
 // Login implements auth.UseCase.
 func (a *authUC) Login(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
 	panic("unimplemented")
-}
-
-// // Register implements auth.UseCase.
-func (u *authUC) Register(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "authUC.Register")
-	defer span.Finish()
-
-	createdUser, err := u.authRepo.Register(ctx, user)
-	if err != nil {
-		return nil, err
-	}
-	createdUser.SanitizePassword()
-
-	return &models.UserWithToken{
-		User:  createdUser,
-		Token: "jaskldfklas",
-	}, nil
-
 }
 
 // Update implements auth.UseCase.

@@ -7,23 +7,27 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	Customer   = "customer"
+	Consultant = "consultant"
+)
+
 // User model for GORM
 type User struct {
 	gorm.Model
-	RoleID   uint    `gorm:"index;not null"`
-	Role     Role    `gorm:"foreignKey:RoleID;constraint:OnDelete:CASCADE"`
-	Name     string  `gorm:"size:100;not null"`
-	Email    string  `gorm:"size:100;uniqueIndex;not null"`
-	Password string  `gorm:"not null"`
-	Phone    *string `gorm:"size:15"`
-	Avatar   string  `gorm:"type:text;null"`
-	Status   string  `gorm:"size:20"`
-
-	Followers []Follow `gorm:"foreignKey:FollowingID"`
-	Following []Follow `gorm:"foreignKey:FollowerID"`
-
-	Post    []Post    `gorm:"foreignKey;UserID;constraint:OnDelete:CASCADE"`
-	Comment []Comment `gorm:"foreignKey;UserID;constraint:OnDelete:CASCADE"`
+	Role           string          `gorm:"size:20;not null" json:"role" binding:"required,oneof=customer consultant" validate:"required,oneof=customer consultant"`
+	Name           string          `gorm:"size:100;not null" json:"name" binding:"required,min=2,max=100" validate:"required,min=2,max=100"`
+	Email          string          `gorm:"size:100;uniqueIndex;not null" json:"email" binding:"required,email" validate:"required,email"`
+	Password       string          `gorm:"not null" json:"password" binding:"required,min=6" validate:"required,min=6"`
+	Phone          *string         `gorm:"size:15" json:"phone" binding:"omitempty,e164" validate:"omitempty,e164"`
+	Avatar         string          `gorm:"type:text;null" json:"avatar" binding:"omitempty" validate:"omitempty"`
+	Status         string          `gorm:"size:20" json:"status" binding:"omitempty,oneof=active inactive banned" validate:"omitempty,oneof=active inactive banned"`
+	Profile        *Profile        `gorm:"foreignKey:ConsultantID;constraint:OnDelete:CASCADE" json:"profile,omitempty" binding:"-" validate:"-"`
+	Certifications []Certification `gorm:"foreignKey:ConsultantID;constraint:OnDelete:CASCADE" json:"certifications,omitempty" binding:"-" validate:"-"`
+	Followers      []Follow        `gorm:"foreignKey:FollowingID" json:"-" binding:"-" validate:"-"`
+	Following      []Follow        `gorm:"foreignKey:FollowerID" json:"-" binding:"-" validate:"-"`
+	Post           []Post          `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-" binding:"-" validate:"-"`
+	Comment        []Comment       `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-" binding:"-" validate:"-"`
 }
 
 // Hash user password with bcrypt

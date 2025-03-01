@@ -8,6 +8,7 @@ package main
 import (
 	"health_backend/config"
 	"health_backend/internal/server"
+	db "health_backend/migration"
 	"health_backend/pkg/db/postgres"
 	"health_backend/pkg/db/redis"
 	"health_backend/pkg/logger"
@@ -40,12 +41,13 @@ func main() {
 	} else {
 		appLogger.Info("Postgres connected successfully")
 	}
-
+	db.MigrateAll(psqlDB)
 	// Get *sql.DB from *gorm.DB and defer closing
 	sqlDB, err := psqlDB.DB()
 	if err != nil {
 		log.Fatalf("Error getting DB instance: %s", err)
 	}
+
 	defer sqlDB.Close()
 
 	// Initialize Redis Client

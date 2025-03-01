@@ -4,16 +4,58 @@ import (
 	"health_backend/config"
 	auth "health_backend/internal/auth/interfaces"
 	"health_backend/internal/models"
+	httpErrors "health_backend/pkg/httpError"
 	"health_backend/pkg/logger"
+	"health_backend/pkg/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/opentracing/opentracing-go"
 )
 
 type authHandlers struct {
 	cfg    *config.Config
 	authUC auth.UseCase
 	logger logger.Logger
+}
+
+func NewAuthHendler(cfg *config.Config, authUC auth.UseCase, log logger.Logger) auth.Handler {
+	return &authHandlers{
+		cfg: cfg, authUC: authUC, logger: log,
+	}
+}
+
+// Register implements auth.Handler.
+// Register godoc
+// @Summary Register new user
+// @Description register new user, returns user and token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Success 201 {object} models.User
+// @Router /auth/register [post]
+func (h *authHandlers) Register() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "auth.Register")
+		defer span.Finish()
+
+		user := &models.User{}
+		if err := utils.ReadRequest(c, user); err != nil {
+			utils.LogResponseError(c, h.logger, err)
+			c.JSON(httpErrors.ErrorResponse(err))
+			return
+		}
+
+		createdUser, err := h.authUC.Register(ctx, user)
+		if err != nil {
+			utils.LogResponseError(c, h.logger, err)
+			c.JSON(httpErrors.ErrorResponse(err))
+			return
+		}
+
+		c.JSON(http.StatusCreated, createdUser)
+
+	}
 }
 
 // Delete implements auth.Handler.
@@ -72,35 +114,6 @@ func (a *authHandlers) Logout() gin.HandlerFunc {
 	}
 }
 
-// Register implements auth.Handler.
-// Register godoc
-// @Summary Register new user
-// @Description register new user, returns user and token
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Success 201 {object} models.User
-// @Router /auth/register [post]
-func (a *authHandlers) Register() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		ctx := c.Request.Context()
-
-		user := &models.User{}
-		if err := c.ShouldBindJSON(user); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		createdUser, err := a.authUC.Register(ctx, user)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot register user"})
-			return
-		}
-
-		c.JSON(http.StatusCreated, createdUser)
-	}
-}
-
 // Update implements auth.Handler.
 func (a *authHandlers) Update() gin.HandlerFunc {
 	panic("unimplemented")
@@ -109,10 +122,4 @@ func (a *authHandlers) Update() gin.HandlerFunc {
 // UploadAvatar implements auth.Handler.
 func (a *authHandlers) UploadAvatar() gin.HandlerFunc {
 	panic("unimplemented")
-}
-
-func NewAuthHendler(cfg *config.Config, authUC auth.UseCase, log logger.Logger) auth.Handler {
-	return &authHandlers{
-		cfg: cfg, authUC: authUC, logger: log,
-	}
 }

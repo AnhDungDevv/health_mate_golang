@@ -38,7 +38,6 @@ func (r *authRepo) Register(ctx context.Context, user *models.User) (*models.Use
 	return user, nil
 }
 
-// Delete implements auth.Repository.
 func (r *authRepo) Delete(ctx context.Context, userID uuid.UUID) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "authRepo.DeleteUser")
 	defer span.Finish()
@@ -53,7 +52,6 @@ func (r *authRepo) Delete(ctx context.Context, userID uuid.UUID) error {
 	return nil
 }
 
-// TODO :FinadByEmail implementaion
 func (r *authRepo) FindByEmail(ctx context.Context, user *models.User) (*models.User, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "authRepo.FinByEmail")
 	defer span.Finish()

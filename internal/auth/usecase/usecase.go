@@ -46,12 +46,6 @@ func (u *authUC) Register(ctx context.Context, user *models.User) (*models.UserW
 		return nil, httpErrors.NewBadRequestError(errors.Wrap(err, "authUC.Register.ValidateUser"))
 	}
 
-	if user.Role == models.Consultant {
-		// if len(user.Expertiese) == 0 {
-		// 	return nil, httpErrors.NewRestErrorWithMessage(http.StatusBadRequest, httpErrors.ExpertisesError, nil)
-		// }
-	}
-
 	if err := user.PrepareCreate(); err != nil {
 		return nil, httpErrors.NewBadRequestError(errors.Wrap(err, "authUC.Register.PrepareCreate"))
 	}
@@ -75,10 +69,32 @@ func (u *authUC) Register(ctx context.Context, user *models.User) (*models.UserW
 }
 
 // Login implements auth.UseCase.
-func (a *authUC) Login(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
+func (u *authUC) Login(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "authUC.Login")
 	defer span.Finish()
-	panic("unimplemented")
+
+	foundUser, err := u.authRepo.FindByEmail(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = foundUser.ComparePasswords(user.Password); err != nil {
+		return nil, httpErrors.NewUnauthorizedError(errors.Wrap(err, "authUC.GetUsers.ComparePasswords"))
+	}
+
+	foundUser.SanitizePassword()
+
+	token, err := utils.GenerateJWTToken(foundUser, u.cfg)
+
+	if err != nil {
+		return nil, httpErrors.NewInternalServerError(errors.Wrap(err, "authUC.GetUser.GenerateJWTToken"))
+
+	}
+
+	return &models.UserWithToken{
+		User:  foundUser,
+		Token: token,
+	}, nil
 
 }
 

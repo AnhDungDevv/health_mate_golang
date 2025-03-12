@@ -1,10 +1,5 @@
 package main
 
-// @title Go example REST API
-// @version 1.0
-// @description This is a sample server for a Go API with Swagger.
-// @host localhost:8080
-// @BasePath /api/v1
 import (
 	"health_backend/config"
 	"health_backend/internal/server"
@@ -15,6 +10,11 @@ import (
 	"log"
 )
 
+// @title Health Backend API
+// @version 1.0
+// @description API cho hệ thống Health Backend
+// @host localhost:5000
+// @BasePath /api/v1
 func main() {
 	log.Println("Starting API server...")
 

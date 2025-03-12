@@ -40,20 +40,73 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "models.User": {
+        "models.Expertiese": {
+            "type": "object",
+            "required": [
+                "category",
+                "consultant_id"
+            ],
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "consultant_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "identity_proof": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "video_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Interest": {
             "type": "object",
             "properties": {
-                "about": {
+                "created_at": {
                     "type": "string"
                 },
-                "address": {
+                "deleted_at": {
                     "type": "string"
                 },
-                "avatar": {
+                "id": {
+                    "type": "integer"
+                },
+                "image_url": {
                     "type": "string"
                 },
-                "birthday": {
+                "name": {
                     "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.User": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password",
+                "role"
+            ],
+            "properties": {
+                "active": {
+                    "type": "boolean"
                 },
                 "city": {
                     "type": "string"
@@ -61,40 +114,47 @@ const docTemplate = `{
                 "country": {
                     "type": "string"
                 },
-                "createdAt": {
+                "created_at": {
+                    "type": "string"
+                },
+                "deleted_at": {
                     "type": "string"
                 },
                 "email": {
                     "type": "string"
                 },
-                "firstName": {
-                    "type": "string"
+                "expertiese": {
+                    "$ref": "#/definitions/models.Expertiese"
                 },
-                "gender": {
-                    "type": "string"
-                },
-                "lastName": {
-                    "type": "string"
-                },
-                "loginDate": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "phoneNumber": {
-                    "type": "string"
-                },
-                "postcode": {
+                "id": {
                     "type": "integer"
                 },
+                "interests": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Interest"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 6
+                },
+                "phone": {
+                    "type": "string"
+                },
                 "role": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                        "customer",
+                        "consultant"
+                    ]
                 },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "userID": {
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -105,11 +165,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "localhost:5000",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "Go example REST API",
-	Description:      "This is a sample server for a Go API with Swagger.",
+	Title:            "Health Backend API",
+	Description:      "API cho hệ thống Health Backend",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

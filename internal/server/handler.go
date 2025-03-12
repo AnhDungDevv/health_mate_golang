@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"health_backend/docs"
 	"health_backend/pkg/metric"
 	"net/http"
 
@@ -12,6 +11,8 @@ import (
 	authRepository "health_backend/internal/auth/repository"
 	authUseCase "health_backend/internal/auth/usecase"
 	apiMiddlewares "health_backend/internal/middleware"
+
+	"health_backend/docs"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -65,7 +66,6 @@ func (s *Server) MapHandlers(g *gin.Engine) error {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
-
 		c.Next()
 	})
 

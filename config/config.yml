@@ -28,7 +28,7 @@ postgres:
   PostgresqlPort: 5432
   PostgresqlUser: postgres
   PostgresqlPassword: AnhDung1505
-  PostgresqlDbname: db_demo
+  PostgresqlDbname: db_test
   PostgresqlSslmode: false
 
 redis:

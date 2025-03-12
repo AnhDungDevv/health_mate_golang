@@ -1,49 +1,91 @@
 basePath: /api/v1
 definitions:
+  models.Expertiese:
+    properties:
+      category:
+        type: string
+      consultant_id:
+        type: integer
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      identity_proof:
+        type: string
+      updated_at:
+        type: string
+      video_url:
+        type: string
+    required:
+    - category
+    - consultant_id
+    type: object
+  models.Interest:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      image_url:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
   models.User:
     properties:
-      about:
-        type: string
-      address:
-        type: string
-      avatar:
-        type: string
-      birthday:
-        type: string
+      active:
+        type: boolean
       city:
         type: string
       country:
         type: string
-      createdAt:
+      created_at:
+        type: string
+      deleted_at:
         type: string
       email:
         type: string
-      firstName:
-        type: string
-      gender:
-        type: string
-      lastName:
-        type: string
-      loginDate:
+      expertiese:
+        $ref: '#/definitions/models.Expertiese'
+      id:
+        type: integer
+      interests:
+        items:
+          $ref: '#/definitions/models.Interest'
+        type: array
+      name:
+        maxLength: 100
+        minLength: 2
         type: string
       password:
+        minLength: 6
         type: string
-      phoneNumber:
+      phone:
         type: string
-      postcode:
-        type: integer
       role:
+        enum:
+        - customer
+        - consultant
         type: string
-      updatedAt:
+      updated_at:
         type: string
-      userID:
-        type: string
+    required:
+    - email
+    - name
+    - password
+    - role
     type: object
-host: localhost:8080
+host: localhost:5000
 info:
   contact: {}
-  description: This is a sample server for a Go API with Swagger.
-  title: Go example REST API
+  description: API cho hệ thống Health Backend
+  title: Health Backend API
   version: "1.0"
 paths:
   /auth/register:

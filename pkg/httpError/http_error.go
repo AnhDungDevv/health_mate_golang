@@ -12,16 +12,14 @@ import (
 )
 
 const (
-	BadRequestError                      = "Bad Request"
-	WrongCredentialsError                = "Wrong Credentials"
-	EmailAlreadyExistsError              = "User with given email already exists"
-	ProfileError                         = "Consultants must have a profile"
-	CertificationError                   = "Consultants must have a certification"
-	CertificationAndProfileNotExistError = "Consultants must have a profile and a certification"
-	NotFoundError                        = "Not Found"
-	UnauthorizedError                    = "Unauthorized"
-	ForbiddenError                       = "Forbidden"
-	BadQueryParamsError                  = "Invalid query params"
+	BadRequestError         = "Bad Request"
+	WrongCredentialsError   = "Wrong Credentials"
+	EmailAlreadyExistsError = "User with given email already exists"
+	ExpertisesError         = "Consultants must have a expertises"
+	NotFoundError           = "Not Found"
+	UnauthorizedError       = "Unauthorized"
+	ForbiddenError          = "Forbidden"
+	BadQueryParamsError     = "Invalid query params"
 )
 
 var (

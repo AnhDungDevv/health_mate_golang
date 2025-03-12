@@ -25,7 +25,6 @@ func NewAuthHendler(cfg *config.Config, authUC auth.UseCase, log logger.Logger) 
 	}
 }
 
-// Register implements auth.Handler.
 // Register godoc
 // @Summary Register new user
 // @Description register new user, returns user and token

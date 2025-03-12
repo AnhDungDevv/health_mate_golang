@@ -10,8 +10,9 @@ import (
 	"health_backend/pkg/utils"
 	"net/http"
 
-	"github.com/go-playground/validator"
 	uuid "github.com/jackc/pgx/pgtype/ext/satori-uuid"
+
+	"github.com/go-playground/validator"
 	"github.com/pkg/errors"
 
 	"github.com/opentracing/opentracing-go"
@@ -46,9 +47,9 @@ func (u *authUC) Register(ctx context.Context, user *models.User) (*models.UserW
 	}
 
 	if user.Role == models.Consultant {
-		if len(user.Certifications) == 0 || user.Profile.Profession == "" {
-			return nil, httpErrors.NewRestErrorWithMessage(http.StatusBadRequest, httpErrors.CertificationAndProfileNotExistError, nil)
-		}
+		// if len(user.Expertiese) == 0 {
+		// 	return nil, httpErrors.NewRestErrorWithMessage(http.StatusBadRequest, httpErrors.ExpertisesError, nil)
+		// }
 	}
 
 	if err := user.PrepareCreate(); err != nil {
@@ -73,6 +74,14 @@ func (u *authUC) Register(ctx context.Context, user *models.User) (*models.UserW
 
 }
 
+// Login implements auth.UseCase.
+func (a *authUC) Login(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "authUC.Login")
+	defer span.Finish()
+	panic("unimplemented")
+
+}
+
 // Delete implements auth.UseCase.
 func (a *authUC) Delete(ctx context.Context, userID uuid.UUID) error {
 	panic("unimplemented")
@@ -90,11 +99,6 @@ func (a *authUC) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, e
 
 // GetUsers implements auth.UseCase.
 func (a *authUC) GetUsers(ctx context.Context, pq *utils.PaginationQuery) (*models.UsersList, error) {
-	panic("unimplemented")
-}
-
-// Login implements auth.UseCase.
-func (a *authUC) Login(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
 	panic("unimplemented")
 }
 

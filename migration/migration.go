@@ -10,8 +10,7 @@ import (
 func MigrateAll(db *gorm.DB) {
 	modelsToMigrate := []interface{}{
 		&models.User{},
-		&models.Profile{},
-		&models.Certification{},
+		&models.Expertiese{},
 	}
 	err := db.AutoMigrate(modelsToMigrate...)
 	if err != nil {

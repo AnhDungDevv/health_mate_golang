@@ -18,7 +18,7 @@ import (
 func main() {
 	log.Println("Starting API server...")
 
-	cfgFile, err := config.LoadConfig("config")
+	cfgFile, err := config.LoadConfig("config-docker")
 	if err != nil {
 		log.Fatalf("LoadConfig error: %v", err)
 	}

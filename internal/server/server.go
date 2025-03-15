@@ -37,7 +37,7 @@ func (s *Server) Run() error {
 	}
 
 	server := &http.Server{
-		Addr:         s.cfg.Server.Port, // Không cần fmt.Sprintf()
+		Addr:         "0.0.0.0" + s.cfg.Server.Port, // ĐÚNG
 		Handler:      s.gin,
 		ReadTimeout:  time.Second * s.cfg.Server.ReadTimeout,
 		WriteTimeout: time.Second * s.cfg.Server.WriteTimeout,

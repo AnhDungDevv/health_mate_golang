@@ -37,7 +37,7 @@ func (s *Server) MapHandlers(g *gin.Engine) error {
 		s.cfg.Metrics.ServiceName,
 	)
 	// Init MQTT Client
-	mqttClient := repositoryMQTT.NewMQTTClient("tcp://localhost:1883", "your-client-id")
+	mqttClient := repositoryMQTT.NewMQTTClient("tcp://emqx:1883", "your-client-id")
 	err = mqttClient.Connect()
 	if err != nil {
 		log.Fatalf("Failed to connect to MQTT broker: %v", err)

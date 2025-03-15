@@ -8,6 +8,10 @@ services:
       - "5000:5000"
       - "5555:5555"
       - "7070:7070"
+    depends_on:
+      - redis
+      - postgres
+      - emqx
     restart: always
     volumes:
       - ./:/app
@@ -48,7 +52,7 @@ services:
     networks:
       - app_api
 
-  postgresql:
+  postgres:
     image: postgres:latest
     container_name: postgres_db
     ports:
@@ -57,11 +61,16 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=auth_db
+      - POSTGRES_DB=test_db
     volumes:
       - pg_data:/var/lib/postgresql/data
     networks:
       - app_api
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
 
   prometheus:
     image: prom/prometheus
@@ -71,7 +80,7 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention=20d"
+      - "--storage.tsdb.retention.time=20d"
       - "--web.console.libraries=/usr/share/prometheus/console_libraries"
       - "--web.console.templates=/usr/share/prometheus/consoles"
     ports:

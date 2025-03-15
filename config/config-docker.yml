@@ -20,11 +20,11 @@ logger:
   Level: info
 
 postgres:
-  PostgresqlHost: postgesql
+  PostgresqlHost: postgres_db
   PostgresqlPort: 5432
   PostgresqlUser: postgres
   PostgresqlPassword: postgres
-  PostgresqlDbname: auth_db
+  PostgresqlDbname: test_db
   PostgresqlSslmode: false
   PgDriver: pgx
 

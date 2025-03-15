@@ -3,14 +3,19 @@ package server
 import (
 	"fmt"
 	"health_backend/pkg/metric"
+	"log"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 
 	authHttp "health_backend/internal/auth/delivery/http"
 	authRepository "health_backend/internal/auth/repository"
 	authUseCase "health_backend/internal/auth/usecase"
 	apiMiddlewares "health_backend/internal/middleware"
+	"health_backend/internal/mqtt/delivery"
+	mqttRoutuer "health_backend/internal/mqtt/delivery"
+	repositoryMQTT "health_backend/internal/mqtt/repository"
+	"health_backend/internal/mqtt/usecase"
+
+	"github.com/gin-gonic/gin"
 
 	"health_backend/docs"
 
@@ -31,15 +36,28 @@ func (s *Server) MapHandlers(g *gin.Engine) error {
 		s.cfg.Metrics.URL,
 		s.cfg.Metrics.ServiceName,
 	)
+	// Init MQTT Client
+	mqttClient := repositoryMQTT.NewMQTTClient("tcp://localhost:1883", "your-client-id")
+	err = mqttClient.Connect()
+	if err != nil {
+		log.Fatalf("Failed to connect to MQTT broker: %v", err)
+	}
+
+	if err != nil {
+		log.Fatalf("Failed to connect to MQTT broker: %v", err)
+	}
+
 	// Init repositories
 	aRepo := authRepository.NewAuthRepository(s.db)
 	authRedisRepo := authRepository.NewAuthRedisRepo(s.redisClient)
 
 	// Init useCases
 	authUC := authUseCase.NewAuthUseCase(s.cfg, aRepo, authRedisRepo, s.logger)
+	mqttUC := usecase.NewMQTTUsecase(mqttClient)
 
 	// Init handlers
 	authHandlers := authHttp.NewAuthHendler(s.cfg, authUC, s.logger)
+	mqttHandler := delivery.NewMQTTHandler(mqttUC)
 
 	// Middelwares
 	mv := apiMiddlewares.NewMiddlewareManager(authUC, s.cfg, []string{"*"}, s.logger)
@@ -71,6 +89,7 @@ func (s *Server) MapHandlers(g *gin.Engine) error {
 
 	v1 := g.Group("/api/v1")
 	authGroup := v1.Group("/auth")
+	mqttRoutuer.NewMapMQTTRoutes(v1, mqttHandler)
 	authHttp.MapAuthRoutes(authGroup, authHandlers)
 	return nil
 

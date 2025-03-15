@@ -1,0 +1,88 @@
+services:
+  api:
+    container_name: api
+    build:
+      context: ./
+      dockerfile: docker/Dockerfile
+    ports:
+      - "5000:5000"
+      - "5555:5555"
+      - "7070:7070"
+    restart: always
+    volumes:
+      - ./:/app
+    networks:
+      - app_api
+
+  redis:
+    image: redis:latest
+    container_name: api_redis
+    ports:
+      - "6379:6379"
+    restart: always
+    networks:
+      - app_api
+
+  emqx:
+    image: emqx/emqx:latest
+    container_name: emqx
+    restart: always
+    environment:
+      - EMQX_NODE__COOKIE=emqxsecretcookie
+      - EMQX_NODE__DATA_DIR=/opt/emqx/data
+    ports:
+      - 1883:1883
+      - 8083:8083
+      - 8084:8084
+      - 18083:18083
+    volumes:
+      - emqx_data:/opt/emqx/data
+    healthcheck:
+      test:
+        - CMD
+        - emqx_ctl
+        - status
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - app_api
+
+  postgresql:
+    image: postgres:latest
+    container_name: postgres_db
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=auth_db
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - app_api
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus_container
+    volumes:
+      - ./docker/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention=20d"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    ports:
+      - "9090:9090"
+    networks:
+      - app_api
+
+networks:
+  app_api:
+    driver: bridge
+
+volumes:
+  emqx_data:
+  pg_data:

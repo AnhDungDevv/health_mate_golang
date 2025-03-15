@@ -1,6 +1,6 @@
 services:
-  api:
-    container_name: api
+  backend:
+    container_name: golang_backend
     build:
       context: ./
       dockerfile: docker/Dockerfile
@@ -17,40 +17,50 @@ services:
       - ./:/app
     networks:
       - app_api
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    restart: always
+    depends_on:
+      - backend
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
 
   redis:
-    image: redis:latest
-    container_name: api_redis
+    image: redis:7
+    container_name: redis_cache
+    restart: always
     ports:
       - "6379:6379"
-    restart: always
+    command: redis-server --save 20 1 --loglevel warning
+    volumes:
+      - redis_data:/data
     networks:
       - app_api
 
-  emqx:
-    image: emqx/emqx:latest
-    container_name: emqx
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
     restart: always
     environment:
-      - EMQX_NODE__COOKIE=emqxsecretcookie
-      - EMQX_NODE__DATA_DIR=/opt/emqx/data
+      ZOOKEEPER_CLIENT_PORT: 2181
     ports:
-      - 1883:1883
-      - 8083:8083
-      - 8084:8084
-      - 18083:18083
-    volumes:
-      - emqx_data:/opt/emqx/data
-    healthcheck:
-      test:
-        - CMD
-        - emqx_ctl
-        - status
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - app_api
+      - "2181:2181"
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka_broker
+    restart: always
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
 
   postgres:
     image: postgres:latest
@@ -93,5 +103,5 @@ networks:
     driver: bridge
 
 volumes:
-  emqx_data:
-  pg_data:
+  postgres_data:
+  redis_data:

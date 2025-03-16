@@ -1,8 +1,9 @@
 package utils
 
 import (
+	"errors"
 	"health_backend/config"
-	"health_backend/internal/models"
+	"health_backend/internal/domain/entity"
 	"strconv"
 	"time"
 
@@ -15,7 +16,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateJWTToken(user *models.User, config *config.Config) (string, error) {
+func GenerateJWTToken(user *entity.User, config *config.Config) (string, error) {
 	claims := &Claims{
 		Email: user.Email,
 		ID:    strconv.Itoa(int(user.ID)),
@@ -32,4 +33,23 @@ func GenerateJWTToken(user *models.User, config *config.Config) (string, error) 
 		return "", err
 	}
 	return tokenString, nil
+}
+
+func VerifyJWTToken(tokenString string, config *config.Config) (*Claims, error) {
+	// Parse token
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("invalid signing method")
+		}
+		return []byte(config.Server.JwtSecretKey), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+		return claims, nil
+	}
+	return nil, errors.New("invalid token")
 }

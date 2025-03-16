@@ -21,7 +21,7 @@ logger:
 
 metrics:
   Url: 0.0.0.0:7070
-  ServiceName: api
+  ServiceName: backend_api
 
 postgres:
   PostgresqlHost: localhost
@@ -33,11 +33,33 @@ postgres:
 
 redis:
   RedisAddr: localhost:6379
-  RedisPassword:
-  RedisDb: 0
-  RedisDefaultdb: 0
+  RedisPassword: ""
+  RedisDb: "0"
+  RedisDefaultdb: "0"
   MinIdleConns: 200
   PoolSize: 12000
   PoolTimeout: 240
   Password: ""
   DB: 0
+  KeyPrefix: "health:"
+
+kafka:
+  Addr: localhost:9092
+  ChatTopic: chat-messages
+  MessageTopic: chat-notifications
+  GroupID: chat-group
+  RetentionTime: 86400 # 24 hours in seconds
+  MaxWait: 3 # seconds
+  BatchSize: 100
+  BatchTimeout: 1 # seconds
+
+chat:
+  PingInterval: 30 # seconds
+  PongWait: 60 # seconds
+  WriteWait: 10 # seconds
+  MaxMessageSize: 4096 # bytes
+  MessageQueueSize: 256
+  UserOnlineTTL: 600 # 10 minutes in seconds
+
+rate_linit:
+  rate: 1000

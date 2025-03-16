@@ -7,23 +7,30 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (mw *MiddlewareManager) MetricsMiddleware(metrics metric.Metrics) gin.HandlerFunc {
-	return func(g *gin.Context) {
-		start := time.Now() // Start tracking time
+type MetricMiddleware struct {
+	metrics metric.Metrics
+}
 
-		// Process the request
-		g.Next()
+func NewMetricMiddleware(metrics metric.Metrics) *MetricMiddleware {
+	return &MetricMiddleware{
+		metrics: metrics,
+	}
+}
 
-		// Get status, method, and path
-		status := g.Writer.Status()
-		method := g.Request.Method
-		path := g.FullPath() // Gets the registered route pattern
+func (m *MetricMiddleware) MetricMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
 
-		// gapture response time
+		// Process request
+		c.Next()
+
+		// Record metrics
 		duration := time.Since(start).Seconds()
+		status := c.Writer.Status()
+		method := c.Request.Method
+		path := c.FullPath()
 
-		// Update Prometheus metrics
-		metrics.ObserveResponseTime(status, method, path, duration)
-		metrics.IncHits(status, method, path)
+		m.metrics.IncHits(status, method, path)
+		m.metrics.ObserveResponseTime(status, method, path, duration)
 	}
 }

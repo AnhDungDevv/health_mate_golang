@@ -7,7 +7,7 @@ server:
   CookieName: jwt-token
   ReadTimeout: 10
   WriteTimeout: 10
-  SSL: true
+  SSL: false
   CtxDefaultTimeout: 12
   CSRF: true
   Debug: false
@@ -30,14 +30,37 @@ postgres:
 
 redis:
   RedisAddr: redis:6379
-  RedisPassword:
-  RedisDb: 0
-  RedisDefaultdb: 0
+  RedisPassword: ""
+  RedisDb: "0"
+  RedisDefaultdb: "0"
   MinIdleConns: 200
   PoolSize: 12000
   PoolTimeout: 240
   Password: ""
   DB: 0
+  KeyPrefix: "health:"
+
+kafka:
+  Addr: kafka:9092
+  ChatTopic: chat-messages
+  MessageTopic: chat-notifications
+  GroupID: chat-group
+  RetentionTime: 86400 # 24 hours in seconds
+  MaxWait: 3 # seconds
+  BatchSize: 100
+  BatchTimeout: 1 # seconds
+
+chat:
+  PingInterval: 30 # seconds
+  PongWait: 60 # seconds
+  WriteWait: 10 # seconds
+  MaxMessageSize: 4096 # bytes
+  MessageQueueSize: 256
+  UserOnlineTTL: 600 # 10 minutes in seconds
+
+metrics:
+  url: 0.0.0.0:7070
+  service: api
 
 cookie:
   Name: jwt-token
@@ -50,27 +73,7 @@ session:
   Prefix: api-session
   Expire: 3600
 
-metrics:
-  url: 0.0.0.0:7070
-  service: api
-
-mongodb:
-  MongoURI: uristring
-
-aws:
-  Endpoint: 127.0.0.1:9000
-  MinioAccessKey: minio
-  MinioSecretKey: minio123
-  UseSSL: false
-  MinioEndpoint: http://127.0.0.1:9000
-
 jaeger:
   Host: localhost:6831
   ServiceName: REST_API
   LogSpans: true
-#aws:
-#  Endpoint: play.min.io
-#  MinioAccessKey: Q3AM3UQ867SPQQA43P2F
-#  MinioSecretKey: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
-#  UseSSL: false
-#  MinioEndpoint: http://127.0.0.1:9000

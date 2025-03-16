@@ -1,83 +1,153 @@
 package metric
 
 import (
-	"log"
 	"strconv"
-	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Metrics interface {
+	// HTTP metrics
 	IncHits(status int, method, path string)
 	ObserveResponseTime(status int, method, path string, observeTime float64)
+
+	// Business metrics
+	IncActiveUsers(userType string)
+	DecActiveUsers(userType string)
+	IncMessages(messageType string)
+
+	// System metrics
+	SetCPUUsage(label string, usage float64)
+	SetMemoryUsage(memType string, usage float64)
 }
+
+// PrometheusMetrics implementation
 type PrometheusMetrics struct {
+	// HTTP metrics
 	HitsTotal prometheus.Counter
 	Hits      *prometheus.CounterVec
 	Times     *prometheus.HistogramVec
+
+	// Business metrics
+	ActiveUsers  *prometheus.GaugeVec
+	MessagesSent *prometheus.CounterVec
+
+	// System metrics
+	CPUUsage    *prometheus.GaugeVec
+	MemoryUsage *prometheus.GaugeVec
 }
 
-func CreateMetrics(address string, name string) (Metrics, error) {
+func NewMetrics(namespace string) (*PrometheusMetrics, error) {
+	m := &PrometheusMetrics{
+		HitsTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "hits_total",
+			Help:      "Total number of hits",
+		}),
+		Hits: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: namespace,
+				Name:      "hits",
+				Help:      "Total number of hits by status, method, path",
+			}, []string{"status", "method", "path"},
+		),
 
-	metr := &PrometheusMetrics{}
+		Times: prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Namespace: namespace,
+				Name:      "response_time",
+				Help:      "Response time histogram",
+				Buckets:   prometheus.DefBuckets,
+			},
+			[]string{"status", "method", "path"},
+		),
+		ActiveUsers: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "active_users",
+				Help:      "Number of active users",
+			},
+			[]string{"type"},
+		),
 
-	metr.HitsTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: name + "_hits_total",
-		Help: "Total number of hits",
-	})
+		MessagesSent: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: namespace,
+				Name:      "messages_sent_total",
+				Help:      "Total number of messages sent",
+			},
+			[]string{"type"},
+		),
 
-	metr.Hits = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: name + "_hits",
-			Help: "Total number of hits",
-		},
-		[]string{"status", "method", "path"},
-	)
-	metr.Times = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    name + "_response_time",
-			Help:    "Response time histogram",
-			Buckets: prometheus.DefBuckets,
-		},
-		[]string{"status", "method", "path"},
-	)
+		// System metrics
+		CPUUsage: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "cpu_usage",
+				Help:      "CPU usage percentage",
+			},
+			[]string{"core"},
+		),
 
-	// Đăng ký metrics với Prometheus
-	for _, metric := range []prometheus.Collector{metr.HitsTotal, metr.Hits, metr.Times} {
-		if err := prometheus.Register(metric); err != nil {
+		MemoryUsage: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "memory_usage",
+				Help:      "Memory usage in bytes",
+			},
+			[]string{"type"},
+		),
+	}
+	// Register all metrics
+	collectors := []prometheus.Collector{
+		m.HitsTotal,
+		m.Hits,
+		m.Times,
+		m.ActiveUsers,
+		m.MessagesSent,
+		m.CPUUsage,
+		m.MemoryUsage,
+	}
+	for _, collector := range collectors {
+		if err := prometheus.Register(collector); err != nil {
 			if _, ok := err.(prometheus.AlreadyRegisteredError); !ok {
 				return nil, err
 			}
 		}
 	}
 
-	go func() {
-		router := gin.Default()
-		router.GET("/metrics", gin.WrapH(promhttp.Handler()))
-
-		// Lấy cổng từ address
-		port := "unknown"
-		if idx := strings.LastIndex(address, ":"); idx != -1 {
-			port = address[idx+1:]
-		}
-
-		log.Printf("Metrics server is running on port: %s", port)
-		if err := router.Run(address); err != nil {
-			log.Fatalf("Failed to start metrics server: %v", err)
-		}
-	}()
-
-	return metr, nil
+	return m, nil
 }
 
-func (metr *PrometheusMetrics) IncHits(status int, method, path string) {
-	metr.HitsTotal.Inc()
-	metr.Hits.WithLabelValues(strconv.Itoa(status), method, path).Inc()
+// HTTP metrics methods
+func (m *PrometheusMetrics) IncHits(status int, method, path string) {
+	statusStr := strconv.Itoa(status)
+	m.HitsTotal.Inc()
+	m.Hits.WithLabelValues(statusStr, method, path).Inc()
+}
+func (m *PrometheusMetrics) ObserveResponseTime(status int, method, path string, observeTime float64) {
+	statusStr := strconv.Itoa(status)
+	m.Times.WithLabelValues(statusStr, method, path).Observe(observeTime)
 }
 
-func (metr *PrometheusMetrics) ObserveResponseTime(status int, method, path string, observeTime float64) {
-	metr.Times.WithLabelValues(strconv.Itoa(status), method, path).Observe(observeTime)
+// Business metrics methods
+func (m *PrometheusMetrics) IncActiveUsers(userType string) {
+	m.ActiveUsers.WithLabelValues(userType).Inc()
+}
+
+func (m *PrometheusMetrics) DecActiveUsers(userType string) {
+	m.ActiveUsers.WithLabelValues(userType).Dec()
+}
+
+func (m *PrometheusMetrics) IncMessages(messageType string) {
+	m.MessagesSent.WithLabelValues(messageType).Inc()
+}
+
+// System metrics methods
+func (m *PrometheusMetrics) SetCPUUsage(core string, usage float64) {
+	m.CPUUsage.WithLabelValues(core).Set(usage)
+}
+
+func (m *PrometheusMetrics) SetMemoryUsage(memType string, usage float64) {
+	m.MemoryUsage.WithLabelValues(memType).Set(usage)
 }

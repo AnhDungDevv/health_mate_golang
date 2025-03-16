@@ -1,9 +1,13 @@
 package server
 
 import (
+	"context"
 	"health_backend/config"
 	"health_backend/pkg/logger"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +21,7 @@ type Server struct {
 	db          *gorm.DB
 	redisClient *redis.Client
 	logger      logger.Logger
+	httpServer  *http.Server
 }
 
 func NewServer(cfg *config.Config, db *gorm.DB, redisClient *redis.Client, logger logger.Logger) *Server {
@@ -30,32 +35,54 @@ func NewServer(cfg *config.Config, db *gorm.DB, redisClient *redis.Client, logge
 }
 
 func (s *Server) Run() error {
+	// Create context that listens for the interrupt signal from the OS.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
+
 	err := s.MapHandlers(s.gin)
 	if err != nil {
 		s.logger.Errorf("Lỗi trong MapHandlers: %v", err)
 		return err
 	}
 
-	server := &http.Server{
-		Addr:         "0.0.0.0" + s.cfg.Server.Port, // ĐÚNG
+	s.httpServer = &http.Server{
+		Addr:         "0.0.0.0" + s.cfg.Server.Port,
 		Handler:      s.gin,
 		ReadTimeout:  time.Second * s.cfg.Server.ReadTimeout,
 		WriteTimeout: time.Second * s.cfg.Server.WriteTimeout,
 	}
 
-	func() {
+	// Start server
+	go func() {
 		s.logger.Infof("Server is listening on PORT: %s", s.cfg.Server.Port)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			s.logger.Fatalf("Error starting Server: %v", err)
 		}
 	}()
 
-	// go func() {
-	// 	s.logger.Infof("Starting Debug Server on PORT: %s", s.cfg.Server.PprofPort)
-	// 	if err := http.ListenAndServe(s.cfg.Server.PprofPort, http.DefaultServeMux); err != nil {
-	// 		s.logger.Errorf("Error PPROF ListenAndServe: %s", err)
-	// 	}
-	// }()
+	// Listen for the interrupt signal
+	<-ctx.Done()
 
+	// Restore default behavior on the interrupt signal and notify user of shutdown
+	stop()
+	s.logger.Info("Shutting down gracefully, press Ctrl+C again to force")
+
+	// The context is used to inform the server it has 5 seconds to finish
+	// the request it is currently handling
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := s.httpServer.Shutdown(ctx); err != nil {
+		s.logger.Errorf("Server forced to shutdown: %v", err)
+	}
+
+	s.logger.Info("Server exiting")
 	return nil
+}
+
+// Cleanup performs cleanup operations
+func (s *Server) Cleanup() {
+	if s.httpServer != nil {
+		s.httpServer.Close()
+	}
 }

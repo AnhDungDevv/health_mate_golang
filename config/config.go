@@ -9,11 +9,36 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Logger   Logger
-	Postgres PostgresConfig
-	Metrics  Metrics
-	Redis    RedisConfig
+	Server    ServerConfig
+	Logger    Logger
+	Postgres  PostgresConfig
+	Metrics   Metrics
+	Redis     RedisConfig
+	Kafka     KafkaConfig
+	Chat      ChatConfig
+	RateLimit RateLimit
+}
+
+// Kafka config
+type KafkaConfig struct {
+	Addr          string
+	ChatTopic     string
+	MessageTopic  string
+	GroupID       string
+	RetentionTime time.Duration
+	MaxWait       time.Duration
+	BatchSize     int
+	BatchTimeout  time.Duration
+}
+
+// Chat config
+type ChatConfig struct {
+	PingInterval     time.Duration
+	PongWait         time.Duration
+	WriteWait        time.Duration
+	MaxMessageSize   int64
+	MessageQueueSize int
+	UserOnlineTTL    time.Duration
 }
 
 type ServerConfig struct {
@@ -68,6 +93,11 @@ type RedisConfig struct {
 	PoolTimeout    int
 	Password       string
 	DB             int
+	KeyPrefix      string // Add prefix for Redis keys
+}
+
+type RateLimit struct {
+	Rate int
 }
 
 func LoadConfig(filename string) (*viper.Viper, error) {

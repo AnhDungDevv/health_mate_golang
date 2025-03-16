@@ -7,11 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (mw *MiddlewareManager) RequestLoggerMiddleware(next gin.HandlerFunc) gin.HandlerFunc {
+func (mw *MiddlewareManager) RequestLoggerMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		start := time.Now()
 		ctx.Next()
-		// get request and response from context
+
 		req := ctx.Request
 		res := ctx.Writer
 

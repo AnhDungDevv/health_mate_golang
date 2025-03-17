@@ -2,8 +2,8 @@ package main
 
 import (
 	"health_backend/config"
+	postgres_migration "health_backend/internal/infrastructure/postgres"
 	"health_backend/internal/server"
-	db "health_backend/migration"
 	"health_backend/pkg/db/postgres"
 	"health_backend/pkg/db/redis"
 	"health_backend/pkg/logger"
@@ -41,7 +41,7 @@ func main() {
 	} else {
 		appLogger.Info("Postgres connected successfully")
 	}
-	db.MigrateAll(psqlDB)
+	postgres_migration.MigrateAll(psqlDB)
 	// Get *sql.DB from *gorm.DB and defer closing
 	sqlDB, err := psqlDB.DB()
 	if err != nil {

@@ -3,7 +3,7 @@ package utils
 import (
 	"errors"
 	"health_backend/config"
-	"health_backend/internal/domain/entity"
+	"health_backend/internal/models"
 	"strconv"
 	"time"
 
@@ -16,7 +16,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateJWTToken(user *entity.User, config *config.Config) (string, error) {
+func GenerateJWTToken(user *models.User, config *config.Config) (string, error) {
 	claims := &Claims{
 		Email: user.Email,
 		ID:    strconv.Itoa(int(user.ID)),

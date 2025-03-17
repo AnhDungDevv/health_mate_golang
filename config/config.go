@@ -22,9 +22,6 @@ type Config struct {
 // Kafka config
 type KafkaConfig struct {
 	Addr          string
-	ChatTopic     string
-	MessageTopic  string
-	GroupID       string
 	RetentionTime time.Duration
 	MaxWait       time.Duration
 	BatchSize     int

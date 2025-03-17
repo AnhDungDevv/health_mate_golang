@@ -1,6 +1,7 @@
-package db
+package postgres_migration
 
 import (
+	"health_backend/internal/models"
 	"log"
 
 	"gorm.io/gorm"

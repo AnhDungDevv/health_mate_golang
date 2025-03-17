@@ -2,40 +2,46 @@ package kafka
 
 import (
 	"context"
-	"encoding/json"
+	"sync"
+	"time"
 
-	"github.com/IBM/sarama"
+	"github.com/segmentio/kafka-go"
 )
 
-type kafkaProducer struct {
-	producer sarama.SyncProducer
+type KafkaProducer struct {
+	Writer *kafka.Writer
 }
 
-func NewKafkaProducer(brokers []string) (domain.Producer, error) {
-	config := sarama.NewConfig()
-	config.Producer.Return.Successes = true
-	config.Producer.RequiredAcks = sarama.WaitForAll
-	config.Producer.Retry.Max = 5
+var (
+	instance *KafkaProducer
+	once     sync.Once
+)
 
-	producer, err := sarama.NewSyncProducer(brokers, config)
-	if err != nil {
-		return nil, err
-	}
-
-	return &kafkaProducer{producer: producer}, nil
+// Khởi tạo Producer Singleton
+func NewKafkaProducer(topic string) *KafkaProducer {
+	once.Do(func() {
+		instance = &KafkaProducer{
+			Writer: &kafka.Writer{
+				Addr:     kafka.TCP(KafkaBrokers...),
+				Topic:    topic,
+				Balancer: &kafka.LeastBytes{},
+			},
+		}
+	})
+	return instance
 }
 
-func (p *kafkaProducer) PublishMessage(ctx context.Context, topic string, message interface{}) error {
-	data, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
+// Publish Message
+func (p *KafkaProducer) PublishMessage(key string, message []byte) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	return p.Writer.WriteMessages(ctx, kafka.Message{
+		Key:   []byte(key),
+		Value: message,
+	})
+}
 
-	msg := &sarama.ProducerMessage{
-		Topic: topic,
-		Value: sarama.StringEncoder(data),
-	}
-
-	_, _, err = p.producer.SendMessage(msg)
-	return err
+// Đóng Producer
+func (p *KafkaProducer) Close() error {
+	return p.Writer.Close()
 }

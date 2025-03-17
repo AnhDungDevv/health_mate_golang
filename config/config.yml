@@ -45,9 +45,6 @@ redis:
 
 kafka:
   Addr: localhost:9092
-  ChatTopic: chat-messages
-  MessageTopic: chat-notifications
-  GroupID: chat-group
   RetentionTime: 86400 # 24 hours in seconds
   MaxWait: 3 # seconds
   BatchSize: 100

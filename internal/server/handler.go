@@ -5,12 +5,13 @@ import (
 	"health_backend/pkg/metric"
 	"net/http"
 
+	authHttp "health_backend/internal/auth/delivery/http"
+	authRepository "health_backend/internal/auth/repository"
+	authUseCase "health_backend/internal/auth/usecase"
+	"health_backend/internal/chat/delivery/websocket"
+	kafka_chat "health_backend/internal/chat/kafka"
+	kafka "health_backend/internal/infrastructure/kafka"
 	apiMiddlewares "health_backend/internal/middleware"
-	authHttp "health_backend/internal/modules/auth/delivery/http"
-	authRepository "health_backend/internal/modules/auth/repository"
-	authUseCase "health_backend/internal/modules/auth/usecase"
-	"health_backend/internal/modules/chat/delivery/websocket"
-	kafka_chat "health_backend/internal/modules/chat/kafka/consumer"
 
 	"github.com/gin-gonic/gin"
 
@@ -31,27 +32,24 @@ func (s *Server) MapHandlers(g *gin.Engine) error {
 		s.cfg.Metrics.ServiceName,
 	)
 
+	brokers := kafka.KafkaBrokers
+	topicChat := kafka.TopicChat
+	groupID := kafka.KafkaGroupID
+
 	// Redis client is already initialized in Server struct
 	redisClient := s.redisClient
+
+	producerChat := kafka_chat.ChatProducer
 
 	// Create context for Kafka
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// Kafka setup
-	brokers := []string{s.cfg.Kafka.Addr}
-	chatTopic := s.cfg.Kafka.ChatTopic
-	messageTopic := s.cfg.Kafka.MessageTopic
-	groupID := s.cfg.Kafka.GroupID
-
-	// Initialize Kafka producer
-	producer := kafka_chat.NewKafkaProducer(brokers, chatTopic)
-
-	// Initialize Kafka consumer and start it
-	consumer := kafka_chat.NewKafkaConsumer(brokers, messageTopic, groupID, s.logger)
+	// Initialize Kafka consumer and start it for chat module
+	consumerChat := kafka_chat.NewKafkaConsumerChat(brokers, topicChat, groupID, s.logger)
 
 	// Start consumer in background with context
 	go func() {
-		consumer.StartConsumer()
+		consumerChat.StartConsumer()
 		// When consumer exits, cancel the context
 		cancel()
 	}()
@@ -60,12 +58,12 @@ func (s *Server) MapHandlers(g *gin.Engine) error {
 	go func() {
 		<-ctx.Done()
 		s.logger.Info("Shutting down Kafka connections...")
-		consumer.Close()
-		producer.Close()
+		consumerChat.Close()
+		producerChat.Close()
 	}()
 
 	// WebSocket Handler
-	wsHandler := websocket.NewWebsocketHandler(s.cfg, nil, s.logger, producer.Writer, redisClient)
+	wsHandler := websocket.NewWebsocketHandler(s.cfg, nil, s.logger, producerChat.Writer, redisClient)
 
 	// Init repositories
 	aRepo := authRepository.NewAuthRepository(s.db)
@@ -110,7 +108,6 @@ func (s *Server) MapHandlers(g *gin.Engine) error {
 	g.Use(
 		mw.Recovery(),
 		mw.RequestLoggerMiddleware(),
-		mw.AuthMiddlewre(),
 		mw.Metrics.Handler(),
 	)
 	// API Routes

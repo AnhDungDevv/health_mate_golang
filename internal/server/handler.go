@@ -110,7 +110,8 @@ func (s *Server) MapHandlers(g *gin.Engine) error {
 	g.Use(
 		mw.Recovery(),
 		mw.RequestLoggerMiddleware(),
-		mw.metrics.Middleware(),
+		mw.AuthMiddlewre(),
+		mw.Metrics.Handler(),
 	)
 	// API Routes
 	v1 := g.Group("/api/v1")

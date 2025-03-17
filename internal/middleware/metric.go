@@ -17,7 +17,7 @@ func NewMetricMiddleware(metrics metric.Metrics) *MetricMiddleware {
 	}
 }
 
-func (m *MetricMiddleware) MetricMiddleware() gin.HandlerFunc {
+func (m *MetricMiddleware) Handler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 

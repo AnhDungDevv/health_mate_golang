@@ -11,7 +11,7 @@ type Repository interface {
 	// Conversation
 	GetConversations(ctx context.Context, userID uuid.UUID) ([]models.Conversation, error)
 	CreateConversation(ctx context.Context, conversation models.Conversation) error
-	GetConversationByUsers(ctx context.Context, user1ID, user2ID uuid.UUID) (models.Conversation, error)
+	GetConversationBetweenUsers(ctx context.Context, user1ID, user2ID uuid.UUID) (models.Conversation, error)
 
 	// Message
 	GetMessages(ctx context.Context, conversationID uuid.UUID) ([]models.Message, error)

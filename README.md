@@ -1,4 +1,4 @@
-# 📌 Project Name
+# 📌 Health_mate
 
 A brief description of the project, its main functionality, and objectives.
 

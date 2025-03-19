@@ -16,47 +16,6 @@ A brief description of the project, its main functionality, and objectives.
 
 ---
 
-## 📂 Project Structure
-
-## Directory Hierarchy
-\`\`\`
-|—— internal
-| |—— server
-| |—— handler.go
-| |—— server.go
-| |—— infrastructure
-| |—— kafka
-| |—— postgres
-| |—— redis
-| |—— middleware
-| |—— auth
-| |—— models
-| |—— chat
-|—— pkg
-|—— docker
-| |—— Dockerfile
-| |—— monitoring
-| |—— prometheus.yml
-|—— README1.md
-|—— cmd
-| |—— api
-| |—— main.go
-|—— config
-| |—— config.go
-| |—— config.yaml
-| |—— config-docker.yaml
-|—— go.mod
-|—— go.sum
-|—— docs
-| |—— docs.go
-| |—— swagger.json
-| |—— swagger.yaml
-|—— docker-compose.dev.yaml
-|—— nginx
-| |—— nginx.conf
-|—— main
-\`\`\`
-
 ## ⚙️ Installation & Running the Project
 
 ### 1️⃣ Clone the Repository

@@ -2,11 +2,20 @@ package chat
 
 import (
 	"context"
-	"health_backend/internal/models"
+	"time"
+
+	uuid "github.com/gofrs/uuid"
 )
 
 type RedisRepository interface {
-	GetByIDCtx(ctx context.Context, key string) (*models.User, error)
-	SetUserCtx(ctx context.Context, key string, seconds int, user *models.User) error
-	DeleteUserCtx(ctx context.Context, key string) error
+	// Status online
+	SetUserOnline(ctx context.Context, clientID string, isOnline bool) error
+	GetUserOnline(ctx context.Context, clientID string) (bool, error)
+	DeleteUser(ctx context.Context, clientID string) error
+	GetConversationID(ctx context.Context, key string) (uuid.UUID, error)
+	SetConversationID(ctx context.Context, key string, conversationID uuid.UUID, expiration time.Duration) error
+	// Miss message
+	StoreMissedMessage(ctx context.Context, clientID string, message []byte) error
+	GetMissedMessages(ctx context.Context, clientID string) ([][]byte, error)
+	RemoveMissedMessages(ctx context.Context, clientID string) error
 }

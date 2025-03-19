@@ -1,6 +1,7 @@
 package http
 
 import (
+	"health_backend/internal/chat"
 
 	"github.com/gin-gonic/gin"
 )

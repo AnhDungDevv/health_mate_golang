@@ -2,10 +2,12 @@ package models
 
 import (
 	"time"
+
+	"github.com/gofrs/uuid"
 )
 
 type Interest struct {
-	ID        uint       `gorm:"primaryKey;autoIncrement" json:"id"`
+	ID        uuid.UUID       `gorm:"primaryKey;autoIncrement" json:"id"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
 	DeletedAt *time.Time `gorm:"index" json:"deleted_at,omitempty"`

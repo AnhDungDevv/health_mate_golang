@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"health_backend/internal/domain/models"
+	"health_backend/internal/models"
 )
 
 // Auth Redis repository interface

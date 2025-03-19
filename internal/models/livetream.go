@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/gofrs/uuid"
 	"gorm.io/gorm"
 )
 
@@ -16,7 +17,7 @@ const (
 
 type LiveStream struct {
 	gorm.Model
-	ConsultantID uint             `gorm:"not null;index"`
+	ConsultantID uuid.UUID             `gorm:"not null;index"`
 	Title        string           `gorm:"type:varchar(100);not null"`
 	Description  string           `gorm:"type:text"`
 	Status       LiveStreamStatus `gorm:"type:varchar(20);not null"`
@@ -28,8 +29,8 @@ type LiveStream struct {
 
 type LiveStreamComment struct {
 	gorm.Model
-	LiveStreamID uint       `gorm:"not null;index"`
-	CustomerID   uint       `gorm:"not null;index"`
+	LiveStreamID uuid.UUID       `gorm:"not null;index"`
+	CustomerID   uuid.UUID       `gorm:"not null;index"`
 	Comment      string     `gorm:"type:text;not null"`
 	Timestamp    time.Time  `gorm:"not null"`
 	LiveStream   LiveStream `gorm:"foreignKey:LiveStreamID;constraint:OnDelete:CASCADE"`
@@ -37,12 +38,12 @@ type LiveStreamComment struct {
 }
 type LiveStreamView struct {
 	gorm.Model
-	LiveStreamID uint `gorm:"not null;index"`
-	CustomerID   uint `gorm:"not null;index"`
+	LiveStreamID uuid.UUID `gorm:"not null;index"`
+	CustomerID   uuid.UUID `gorm:"not null;index"`
 }
 type LiveStreamStats struct {
 	gorm.Model
-	LiveStreamID uint      `gorm:"not null;index"`
+	LiveStreamID uuid.UUID      `gorm:"not null;index"`
 	ViewCount    int       `gorm:"not null"`
 	RecordedAt   time.Time `gorm:"not null"`
 }

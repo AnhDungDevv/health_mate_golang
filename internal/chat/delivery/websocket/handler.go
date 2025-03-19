@@ -5,15 +5,15 @@ import (
 	"encoding/json"
 	"health_backend/config"
 	"health_backend/internal/chat"
+	"health_backend/internal/models"
 	"health_backend/pkg/logger"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	uuid "github.com/gofrs/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/redis/go-redis/v9"
-	"github.com/segmentio/kafka-go"
 )
 
 // ChatMessage represents the structure of a chat message
@@ -35,22 +35,17 @@ var upgrader = websocket.Upgrader{
 }
 
 type HandleWebSocket struct {
-	cfg         *config.Config
-	chatUC      chat.UseCase
-	logger      logger.Logger
-	kafkaWriter *kafka.Writer
-	redisClient *redis.Client
+	cfg    *config.Config
+	chatUC chat.UseCase
+	logger logger.Logger
 }
 
-// Constructor cho WebSocketHandler
 // Constructor WebSocketHandler
-func NewWebsocketHandler(cfg *config.Config, uc chat.UseCase, log logger.Logger, kafkaWriter *kafka.Writer, redisClient *redis.Client) chat.WebSocketHandler {
+func NewWebsocketHandler(cfg *config.Config, uc chat.UseCase, log logger.Logger) chat.WebSocketHandler {
 	return &HandleWebSocket{
-		cfg:         cfg,
-		chatUC:      uc,
-		logger:      log,
-		kafkaWriter: kafkaWriter,
-		redisClient: redisClient,
+		cfg:    cfg,
+		chatUC: uc,
+		logger: log,
 	}
 }
 
@@ -98,23 +93,24 @@ func (h *HandleWebSocket) HandleWebSocket() gin.HandlerFunc {
 			}
 		}()
 
-		//Match user as online in redis
-		_, err = h.redisClient.Get(ctx, "online:"+clientID).Result()
-		if err == redis.Nil {
-			h.redisClient.Set(ctx, "online:"+clientID, "1", 10*time.Minute).Err()
-		}
-		if err != nil && err != redis.Nil {
-			h.logger.Error("Failed to set Redis key:", err)
-		}
-
 		// Add to list
 		clients.Store(clientID, conn)
 		h.logger.Info("New WebSocket connection: ", clientID)
+		userUUID, err := uuid.FromString(clientID)
+		if err != nil {
+			h.logger.Error("Invalid UUID format", err, "ClientID:", clientID)
+			return
+		}
+
+		err = h.chatUC.SetUserOnlineStatus(ctx, userUUID, true)
+		if err != nil {
+			h.logger.Error("Failed to set user online status", err, "UserID:", userUUID)
+		}
+		h.chatUC.NotifyUserOnline(ctx, clientID)
 
 		// Cleanup when disconnected
 		defer func() {
 			clients.Delete(clientID)
-			h.redisClient.Del(ctx, "online:"+clientID).Err()
 			h.logger.Info("WebSocket disconnected: ", clientID)
 		}()
 
@@ -128,51 +124,89 @@ func (h *HandleWebSocket) HandleWebSocket() gin.HandlerFunc {
 				break
 			}
 
-			// Parse the message
 			var chatMsg ChatMessage
 			if err := json.Unmarshal(rawMsg, &chatMsg); err != nil {
-				h.logger.Error("Failed to parse message:", err)
 				conn.WriteMessage(websocket.TextMessage, []byte("Invalid message format"))
 				continue
 			}
 
-			// Validate message
 			if chatMsg.To == "" || chatMsg.Content == "" {
 				conn.WriteMessage(websocket.TextMessage, []byte("Invalid message: missing required fields"))
 				continue
 			}
 
-			// Add metadata
-			chatMsg.From = clientID
-			chatMsg.Timestamp = time.Now()
-
-			// Convert message back to JSON
-			msgBytes, err := json.Marshal(chatMsg)
+			fromUUID, err := uuid.FromString(chatMsg.From)
 			if err != nil {
-				h.logger.Error("Failed to marshal message:", err)
+				conn.WriteMessage(websocket.TextMessage, []byte("Invalid sender UUID"))
+				return
+			}
+
+			toUUID, err := uuid.FromString(chatMsg.To)
+			if err != nil {
+				conn.WriteMessage(websocket.TextMessage, []byte("Invalid receiver UUID"))
+				return
+			}
+
+			// ✅ Chuyển `Metadata` từ `map[string]any` sang JSON string
+			metadataJSON, err := json.Marshal(chatMsg.Metadata)
+			if err != nil {
+				conn.WriteMessage(websocket.TextMessage, []byte("Invalid metadata format"))
+				return
+			}
+
+			// ✅ Lấy ID cuộc trò chuyện
+			conversationID, err := h.chatUC.GetConversationID(ctx, fromUUID, toUUID)
+			if err != nil {
+				conn.WriteMessage(websocket.TextMessage, []byte("Failed to get conversation ID"))
+				return
+			}
+
+			// ✅ Tạo tin nhắn mới với kiểu dữ liệu đúng
+			message := &models.Message{
+				ID:             uuid.Must(uuid.NewV4()),
+				SenderID:       fromUUID,
+				ConversationID: conversationID,
+				ReceiverID:     toUUID,
+				Content:        chatMsg.Content,
+				Metadata:       string(metadataJSON),
+				IsRead:         false,
+				ReadAt:         nil,
+				CreatedAt:      time.Now(),
+			}
+			messageJSON, err := json.Marshal(message)
+			if err != nil {
+				h.logger.Error("Failed to marshal message to JSON:", err)
+			} else {
+				h.logger.Info("Message JSON:", string(messageJSON))
+			}
+
+			// Gửi tin nhắn qua UseCase
+			err = h.chatUC.SendMessage(ctx, conversationID, message)
+			if err != nil {
+				conn.WriteMessage(websocket.TextMessage, []byte("Failed to send message"))
 				continue
 			}
 
-			h.logger.Info("Received message: ", string(msgBytes))
-
-			// Publish message to Kafka
-			err = h.kafkaWriter.WriteMessages(ctx, kafka.Message{
-				Key:   []byte(clientID),
-				Value: msgBytes,
-			})
-			if err != nil {
-				h.logger.Error("Failed to publish message to Kafka:", err)
-				conn.WriteMessage(websocket.TextMessage, []byte("Failed to deliver message"))
-			}
 		}
 	}
 }
 
 func SendToClient(clientID string, message []byte) {
 	if conn, exists := clients.Load(clientID); exists {
-		wsConn := conn.(*websocket.Conn)
+		wsConn, ok := conn.(*websocket.Conn)
+		if !ok {
+			clients.Delete(clientID)
+			return
+		}
+
+		err := wsConn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second))
+		if err != nil {
+			clients.Delete(clientID)
+			wsConn.Close()
+			return
+		}
+
 		if err := wsConn.WriteMessage(websocket.TextMessage, message); err != nil {
-			// Remove client if connection is broken
 			clients.Delete(clientID)
 			wsConn.Close()
 		}

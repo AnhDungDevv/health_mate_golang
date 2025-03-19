@@ -7,8 +7,8 @@ import (
 	"health_backend/internal/models"
 	"health_backend/pkg/utils"
 
+	uuid "github.com/gofrs/uuid"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 	"gorm.io/gorm"
 
 	opentracing "github.com/opentracing/opentracing-go"

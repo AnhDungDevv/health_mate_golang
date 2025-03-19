@@ -28,12 +28,14 @@ func (r *BaseRedisRepository) Set(ctx context.Context, key string, value interfa
 	return r.client.Set(ctx, key, data, expiration).Err()
 }
 
-func (r *BaseRedisRepository) Get(ctx context.Context, key string, dest interface{}) error {
-	data, err := r.client.Get(ctx, key).Bytes()
-	if err != nil {
-		return err
+func (r *BaseRedisRepository) Get(ctx context.Context, key string) (string, error) {
+	val, err := r.client.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return "", nil // Key không tồn tại
+	} else if err != nil {
+		return "", err // Lỗi Redis
 	}
-	return json.Unmarshal(data, dest)
+	return val, nil
 }
 
 func (r *BaseRedisRepository) Delete(ctx context.Context, key string) error {
@@ -67,4 +69,19 @@ func (r *BaseRedisRepository) HGet(ctx context.Context, key string, field string
 		return err
 	}
 	return json.Unmarshal(data, dest)
+}
+
+// LPush - Thêm phần tử vào đầu danh sách trong Redis
+func (r *BaseRedisRepository) LPush(ctx context.Context, key string, value interface{}) error {
+	return r.client.LPush(ctx, key, value).Err()
+}
+
+// LRange - Lấy các phần tử trong một dãy từ Redis
+func (r *BaseRedisRepository) LRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
+	return r.client.LRange(ctx, key, start, stop).Result()
+}
+
+// Expire - Thiết lập thời gian hết hạn cho khóa trong Redis
+func (r *BaseRedisRepository) Expire(ctx context.Context, key string, expiration time.Duration) error {
+	return r.client.Expire(ctx, key, expiration).Err()
 }

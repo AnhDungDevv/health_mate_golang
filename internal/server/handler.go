@@ -10,7 +10,11 @@ import (
 	authUseCase "health_backend/internal/auth/usecase"
 	"health_backend/internal/chat/delivery/websocket"
 	kafka_chat "health_backend/internal/chat/kafka"
+	"health_backend/internal/chat/repository"
+	chat_redis "health_backend/internal/chat/repository/redis"
+	"health_backend/internal/chat/usecase"
 	kafka "health_backend/internal/infrastructure/kafka"
+	base_redis "health_backend/internal/infrastructure/redis"
 	apiMiddlewares "health_backend/internal/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -37,20 +41,24 @@ func (s *Server) MapHandlers(g *gin.Engine) error {
 	groupID := kafka.KafkaGroupID
 
 	// Redis client is already initialized in Server struct
-	redisClient := s.redisClient
-
-	producerChat := kafka_chat.ChatProducer
+	baseRedis := base_redis.NewBaseRedisRepository(s.redisClient)
+	chatRedisRepository := chat_redis.NewChatRedisRepository(baseRedis, s.logger)
+	// init pgRepository
+	chatRepository := repository.NewChatRepository(s.db)
 
 	// Create context for Kafka
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Initialize Kafka consumer and start it for chat module
-	consumerChat := kafka_chat.NewKafkaConsumerChat(brokers, topicChat, groupID, s.logger)
+	consumerChat := kafka_chat.NewKafkaConsumerChat(brokers, topicChat, groupID, s.logger, chatRedisRepository, chatRepository)
+	// init chat usecae chat
+	producerChat := kafka_chat.NewKafkaProducer(s.logger)
+	chatUC := usecase.NewChatUsecase(s.cfg, chatRepository, chatRedisRepository, producerChat, s.logger)
+	// init porducer
 
 	// Start consumer in background with context
 	go func() {
 		consumerChat.StartConsumer()
-		// When consumer exits, cancel the context
 		cancel()
 	}()
 
@@ -63,7 +71,7 @@ func (s *Server) MapHandlers(g *gin.Engine) error {
 	}()
 
 	// WebSocket Handler
-	wsHandler := websocket.NewWebsocketHandler(s.cfg, nil, s.logger, producerChat.Writer, redisClient)
+	wsHandler := websocket.NewWebsocketHandler(s.cfg, chatUC, s.logger)
 
 	// Init repositories
 	aRepo := authRepository.NewAuthRepository(s.db)

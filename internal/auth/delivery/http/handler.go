@@ -89,7 +89,7 @@ func (h *authHandlers) Register() gin.HandlerFunc {
 func (h *authHandlers) Login() gin.HandlerFunc {
 	type Login struct {
 		Email    string `json:"email"`
-		Password string `json:"password`
+		Password string `json:"password"`
 	}
 	return func(c *gin.Context) {
 		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "auth.login")

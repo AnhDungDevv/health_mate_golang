@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/gofrs/uuid"
 	"gorm.io/gorm"
 )
 
@@ -40,12 +41,12 @@ type Notification struct {
 	Status           NotificationStatus `gorm:"type:varchar(20);not null"`
 	Type             NotificationType   `gorm:"type:varchar(20);not null"`
 	Event            EventType          `gorm:"type:varchar(20);not null"`
-	UserID           uint               `gorm:"not null"`
+	UserID           uuid.UUID          `gorm:"not null"`
 	User             User               `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 	NotificationDate time.Time          `gorm:"not null"`
 }
 
-// func SendNotification(userID uint, title, content string, notifType NotificationType, eventType EventType) error {
+// func SendNotification(userID uuid.UUID, title, content string, notifType NotificationType, eventType EventType) error {
 // 	notification := Notification{
 // 		Title:            title,
 // 		Content:          content,

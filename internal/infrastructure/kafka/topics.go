@@ -1,15 +1,7 @@
-package kakfa
+package kafka
 
 const (
-	// Topic cho module chat
-	ChatTopic   = "chat_messages"
-	ChatGroupID = "chat_service"
-
-	// Topic cho module notification
-	NotificationTopic   = "notification_messages"
-	NotificationGroupID = "notification_service"
-
-	// Topic cho module task
-	TaskTopic   = "task_events"
-	TaskGroupID = "task_service"
+	TopicChat         = "chat.messages"
+	TopicNotification = "notifications.events"
+	TopicUserEvents   = "users.events"
 )

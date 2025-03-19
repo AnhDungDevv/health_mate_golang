@@ -4,14 +4,14 @@ import (
 	"context"
 	"health_backend/internal/models"
 
-	"github.com/gorilla/websocket"
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/gofrs/uuid"
 )
 
 type UseCase interface {
 	// Conversations
 	GetConversations(ctx context.Context) ([]*models.Conversation, error)
 	CreateConversation(ctx context.Context, conversation *models.Conversation) error
+	GetConversationID(ctx context.Context, from, to uuid.UUID) (uuid.UUID, error)
 	GetConversation(ctx context.Context, conversationID uuid.UUID) (*models.Conversation, error)
 	DeleteConversation(ctx context.Context, conversationID uuid.UUID) error
 
@@ -22,10 +22,7 @@ type UseCase interface {
 	DeleteMessage(ctx context.Context, messageID uuid.UUID) error
 	UnsendMessage(ctx context.Context, messageID uuid.UUID) error
 
-	// Websocket
-	HandleWebSocket(conn *websocket.Conn)
-
-	// Redis
+	NotifyUserOnline(ctx context.Context, userID string) error
 	SaveUnreadMessage(ctx context.Context, message *models.Message) error
 	GetUnreadMessages(ctx context.Context, userID uuid.UUID) ([]*models.Message, error)
 	SetUserOnlineStatus(ctx context.Context, userID uuid.UUID, status bool) error

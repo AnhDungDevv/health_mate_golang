@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/gofrs/uuid"
 	"gorm.io/gorm"
 )
 
@@ -23,7 +24,7 @@ const (
 
 type Payment struct {
 	gorm.Model
-	ConsultationID uint          `gorm:"not null;index"`
+	ConsultationID uuid.UUID     `gorm:"not null;index"`
 	Amount         float64       `gorm:"type:numeric(10,2);not null"`
 	Status         PaymentStatus `gorm:"type:varchar(20);not null"`
 	PaymentDate    time.Time     `gorm:"not null"`

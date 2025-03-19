@@ -5,8 +5,11 @@ import (
 	"health_backend/internal/models"
 )
 
-type ChatKafkaUseCase interface {
-	// Kafka (Streaming Messages)
+type KafkaProducer interface {
 	ProduceMessageToKafka(ctx context.Context, message *models.Message) error
-	ConsumeMessagesFromKafka(ctx context.Context) error
+	NotifyUserOnline(ctx context.Context, userID string) error
+	Close() error
+}
+
+type KafkaConsumer interface {
 }

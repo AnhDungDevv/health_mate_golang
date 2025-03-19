@@ -1,6 +1,9 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"github.com/gofrs/uuid"
+	"gorm.io/gorm"
+)
 
 type ServiceType string
 
@@ -12,7 +15,7 @@ const (
 
 type Pricing struct {
 	gorm.Model
-	ConsultantID uint        `gorm:"not null;index"`
+	ConsultantID uuid.UUID        `gorm:"not null;index"`
 	ServiceType  ServiceType `gorm:"type:varchar(20);not null"`
 	Price        float64     `gorm:"type:numeric(10,2);not null"`
 	IsFree       bool        `gorm:"default:false"`

@@ -1,11 +1,14 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"github.com/gofrs/uuid"
+	"gorm.io/gorm"
+)
 
 type Review struct {
 	gorm.Model
-	CustomerID   uint    `gorm:"not null" `
-	ConsultantID uint    `gorm:"not null"`
+	CustomerID   uuid.UUID    `gorm:"not null" `
+	ConsultantID uuid.UUID    `gorm:"not null"`
 	Rating       float64 `gorm:"not null"`
 	Comment      string  `gorm:"type:text"`
 

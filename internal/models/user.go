@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -14,7 +15,7 @@ const (
 )
 
 type User struct {
-	ID        uint       `gorm:"primaryKey;autoIncrement" json:"id"`
+	ID        uuid.UUID  `gorm:"primaryKey;autoIncrement" json:"id"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
 	DeletedAt *time.Time `gorm:"index" json:"deleted_at,omitempty"`
@@ -28,7 +29,7 @@ type User struct {
 
 	City       *string    `gorm:"size:100" json:"city,omitempty"`
 	Country    *string    `gorm:"size:100" json:"country,omitempty"`
-	Expertiese Expertiese `gorm:"foreignKey:ConsultantID;constraint:OnDelete:CASCADE" json:"expertiese,omitempty" binding:"-" validate:"-"`
+	Expertiese Expertiese `gorm:"foreignKey:ConsultantID;constraint:OnDelete:CASCADE" json:"expertiese,omitempty"`
 
 	Interests []Interest `gorm:"type:json" json:"interests,omitempty"`
 

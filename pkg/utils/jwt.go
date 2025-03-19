@@ -4,7 +4,6 @@ import (
 	"errors"
 	"health_backend/config"
 	"health_backend/internal/models"
-	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -17,9 +16,11 @@ type Claims struct {
 }
 
 func GenerateJWTToken(user *models.User, config *config.Config) (string, error) {
+	userID := user.ID.String()
+
 	claims := &Claims{
 		Email: user.Email,
-		ID:    strconv.Itoa(int(user.ID)),
+		ID:    userID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -34,7 +35,6 @@ func GenerateJWTToken(user *models.User, config *config.Config) (string, error) 
 	}
 	return tokenString, nil
 }
-
 func VerifyJWTToken(tokenString string, config *config.Config) (*Claims, error) {
 	// Parse token
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {

@@ -1,10 +1,14 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/gofrs/uuid"
+)
 
 type Follow struct {
-	FollowerID  uint      `gorm:"primaryKey;"`
-	FollowingID uint      `gorm:"primaryKey;"`
+	FollowerID  uuid.UUID      `gorm:"primaryKey;"`
+	FollowingID uuid.UUID      `gorm:"primaryKey;"`
 	CreatedAt   time.Time `gorm:"autoCreateTime"`
 
 	// Foreignkey
